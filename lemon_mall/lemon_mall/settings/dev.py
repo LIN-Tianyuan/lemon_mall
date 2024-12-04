@@ -10,12 +10,17 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-import os
+import os,sys
 from pathlib import Path
+
+# View package path
+# print(sys.path)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Append the package guide path to the apps package
+sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -38,6 +43,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'users', # user module
 ]
 
 MIDDLEWARE = [
@@ -152,8 +159,10 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
-
+# Specify the route prefix for loading static files
 STATIC_URL = 'static/'
+# Configure static file loading path
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -201,3 +210,6 @@ LOGGING = {
         },
     }
 }
+
+# Specify custom user model classes: Syntax: subapplication.User Model Classes
+AUTH_USER_MODEL = 'users.User'

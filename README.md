@@ -1,6 +1,10 @@
 # Lemon Mall
 
 ## Project preparation
+ - Architecture Design
+```bash
+Django + Jinja2 + Vue.js
+```
 
  - Create Project
 
@@ -127,8 +131,76 @@ CACHES = {
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "session"
 ```
- - Configuring the project log
- - 
+ - Configure the project log
+ - Configure front-end static files
+ ```bash
+ STATIC_URL = 'static/'
+# Configure static file loading path
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+ ```
+
+## User Registration
+### Show user registration page
+ - Create User Module Sub-Applications
+```bash
+$ cd ~/projects/lemon_mall/lemon_mall/lemon_mall/apps
+$ python ../../manage.py startapp users
+```
+ - View the project guide package path
+ ```bash
+ print(sys.path)
+ ```
+  - Append package path
+```bash
+sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+
+    'users'
+]
+```
+ - Show user registration page
+### User model class
+ - Custom User Model Classes
+ ```python
+ from django.db import models
+from django.contrib.auth.models import AbstractUser
+
+
+# Create your models here.
+class User(AbstractUser):
+    """Custom User Model Classes"""
+    mobile = models.CharField(max_length=11, unique=True, verbose_name='mobile')
+
+    class Meta:
+        db_table = 'tb_users'    # Custom Table Names
+        verbose_name = 'User'   # User
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.username
+ ```
+  - Migrate user model classes
+  ```bash
+  # Specify custom user model classes: Syntax: subapplication.User Model Classes
+  AUTH_USER_MODEL = 'users.User'
+
+  python3 manage.py makemigrations
+  python3 manage.py migrate
+  ```
+### User registration business realization
+ - front end
+ ```bash
+ Binding Vue data to user registration page
+ User registration JS file to implement user interaction
+ User interaction event implementation
+ ```
 
 
 ## License

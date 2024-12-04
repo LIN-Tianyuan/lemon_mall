@@ -1,0 +1,89 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+	<title>Lemon Mall-Registration</title>
+	<link rel="stylesheet" type="text/css" href="{{ static('css/reset.css') }}">
+	<link rel="stylesheet" type="text/css" href="{{ static('css/main.css') }}">
+	<script type="text/javascript" src="{{ static('js/vue-2.5.16.js') }}"></script>
+	<script type="text/javascript" src="{{ static('js/axios-0.18.0.min.js') }}"></script>
+</head>
+<body>
+	<div id="app">
+	<div class="register_con">
+		<div class="l_con fl">
+			<a href="index.html" class="reg_logo"><img src="../static/images/lemonmall.png"></a>
+			<div class="reg_slogan">Welcome</div>
+			<div class="reg_banner"></div>
+		</div>
+		<div class="r_con">
+			<div class="reg_title clearfix">
+				<h1>Create account</h1>
+				<a href="login.html">Sign in</a>
+			</div>
+			<div class="reg_form clearfix">
+				<form method="post" class="register_form" @submit="on_submit" v-cloak>
+					{{ csrf_input }}
+					<ul>
+						<li>
+							<label>Username:</label>
+							<input type="text" v-model="username" @blur="check_username" name="username" id="user_name">
+							<span class="error_tip" v-show="error_name">[[ error_name_message ]]</span>
+						</li>					
+						<li>
+							<label>Password:</label>
+							<input type="password" v-model="password" @blur="check_password" name="password" id="pwd">
+							<span class="error_tip" v-show="error_password">Please enter a password of 8-20 digits</span>
+						</li>
+						<li>
+							<label>Confirm password:</label>
+							<input type="password" v-model="password2" @blur="check_password2" name="password2" id="cpwd">
+							<span class="error_tip" v-show="error_password2">Inconsistent passwords entered twice</span>
+						</li>
+						<li>
+							<label>Phone number:</label>
+							<input type="text" v-model="mobile" @blur="check_mobile" name="mobile" id="phone">
+							<span class="error_tip" v-show="error_mobile">[[ error_mobile_message ]]</span>
+						</li>
+						<li>
+							<label>Graphic code:</label>
+							<input type="text" name="image_code" id="pic_code" class="msg_input">
+							<img src="../static/images/pic_code.jpg" alt="pic_code" class="pic_code">
+							<span class="error_tip">Please fill in the graphic code</span>
+						</li>
+						<li>
+							<label>Message code:</label>
+							<input type="text" name="sms_code" id="msg_code" class="msg_input">
+							<a href="javascript:;" class="get_msg_code">Get code</a>
+							<span class="error_tip">Please fill in the message code</span>
+						</li>
+						<li class="agreement">
+							<input type="checkbox" v-model="allow" @change="check_allow" name="allow" id="allow">
+							<label>Agree to the “Lemon Mall User Agreement”</label>
+							<span class="error_tip" v-show="error_allow">Please check the user agreement</span>
+						</li>
+						<li class="reg_sub">
+							<input type="submit" value="Register">
+						</li>
+					</ul>				
+				</form>
+			</div>
+		</div>
+	</div>
+	<div class="footer no-mp">
+		<div class="foot_link">
+			<a href="#">About us</a>
+			<span>|</span>
+			<a href="#">Contact us</a>
+			<span>|</span>
+			<a href="#">Recruitment</a>
+			<span>|</span>
+			<a href="#">Friendly Links</a>
+		</div>
+		<p>CopyRight © 2024 Lemon Company All Rights Reserved</p>
+		<p>Phone：+33768915934    LIN Tianyuan</p>
+	</div>
+	</div>
+	<script src="{{ static('js/register.js') }}"></script>
+</body>
+</html>
