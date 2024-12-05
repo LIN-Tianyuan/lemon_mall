@@ -201,6 +201,32 @@ class User(AbstractUser):
  User registration JS file to implement user interaction
  User interaction event implementation
  ```
+ - back end
+ ```bash
+ Receive parameters
+ Check parameters
+ Save registration data
+ Respond to registration results
+ ```
+ - state maintenance
+ ```bash
+ Write the unique identifying information of the authenticated user (e.g., user ID) to the current browser's cookie and the server's session.
+
+ login(request, user)
+ ``` 
+
+ - Duplicate user name registration
+ ```bash
+ Use the user name to query whether the record corresponding to the user name exists, if it exists, it means duplicate registration, on the contrary, there is no duplicate registration.
+
+ axios:
+ Handling user interactions
+ Collecting request parameters
+ Preparing the request address
+ Sending an asynchronous request
+ Getting server response
+ Controlling the display of the interface
+ ```
 
 
 ## License

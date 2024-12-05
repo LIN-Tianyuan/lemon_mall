@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'users', # user module
+    'users', # User module
+    'contents', # Home Advertising module
 ]
 
 MIDDLEWARE = [

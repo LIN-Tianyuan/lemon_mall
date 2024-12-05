@@ -61,6 +61,9 @@
 							<input type="checkbox" v-model="allow" @change="check_allow" name="allow" id="allow">
 							<label>Agree to the “Lemon Mall User Agreement”</label>
 							<span class="error_tip" v-show="error_allow">Please check the user agreement</span>
+							{% if register_errmsg %}
+								<span class="error_tip">{{ register_errmsg }}</span>
+							{% endif %}
 						</li>
 						<li class="reg_sub">
 							<input type="submit" value="Register">
