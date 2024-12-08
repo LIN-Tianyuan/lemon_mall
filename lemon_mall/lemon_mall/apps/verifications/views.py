@@ -2,13 +2,14 @@ from django.shortcuts import render
 from django.views import View
 from django_redis import get_redis_connection
 from django import http
-from . import constants
-from lemon_mall.utils.response_code import RETCODE
 import random, logging
 
 
 from verifications.libs.twilio.send_sms import CCP
 from verifications.libs.captcha.captcha import captcha
+from . import constants
+from lemon_mall.utils.response_code import RETCODE
+from celery_tasks.sms.tasks import send_sms_code
 
 # Create your views here.
 
@@ -82,5 +83,9 @@ class SMSCodeView(View):
 
         # Send SMS Verification Code
         # CCP().send_template_sms(mobile, f"Your verification code is {sms_code}. Please enter it correctly within 5 minutes.")
+        # Sending SMS CAPTCHA with Celery
+        # send_sms_code(mobile, sms_code) wrong
+        send_sms_code.delay(mobile, sms_code)
+
         # Response results
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'Send SMS successfully'})
