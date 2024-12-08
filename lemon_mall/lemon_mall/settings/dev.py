@@ -46,6 +46,7 @@ INSTALLED_APPS = [
 
     'users', # User module
     'contents', # Home Advertising module
+    'verifications', # CAPTCHA
 ]
 
 MIDDLEWARE = [
@@ -120,6 +121,13 @@ CACHES = {
     "session": { # session
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://192.168.1.14:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+    "verify_code": { # captcha
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://192.168.1.14:6379/2",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }

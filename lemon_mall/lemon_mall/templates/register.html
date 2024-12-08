@@ -47,15 +47,15 @@
 						</li>
 						<li>
 							<label>Graphic code:</label>
-							<input type="text" name="image_code" id="pic_code" class="msg_input">
-							<img src="../static/images/pic_code.jpg" alt="pic_code" class="pic_code">
-							<span class="error_tip">Please fill in the graphic code</span>
+							<input type="text" v-model="image_code" @blur="check_image_code" name="image_code" id="pic_code" class="msg_input">
+							<img :src="image_code_url" @click="generate_image_code" alt="pic_code" class="pic_code">
+							<span class="error_tip" v-show="error_image_code">[[ error_image_code_message ]]</span>
 						</li>
 						<li>
 							<label>Message code:</label>
 							<input type="text" name="sms_code" id="msg_code" class="msg_input">
-							<a href="javascript:;" class="get_msg_code">Get code</a>
-							<span class="error_tip">Please fill in the message code</span>
+							<a @click="send_sms_code" class="get_msg_code">[[ sms_code_tip ]]</a>
+							<span class="error_tip" v-show="error_sms_code">[[ error_sms_code_message ]]</span>
 						</li>
 						<li class="agreement">
 							<input type="checkbox" v-model="allow" @change="check_allow" name="allow" id="allow">
@@ -87,6 +87,7 @@
 		<p>Phone：+33768915934    LIN Tianyuan</p>
 	</div>
 	</div>
+	<script src="{{ static('js/common.js') }}"></script>
 	<script src="{{ static('js/register.js') }}"></script>
 </body>
 </html>

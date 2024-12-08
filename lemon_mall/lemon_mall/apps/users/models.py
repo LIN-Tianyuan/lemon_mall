@@ -5,7 +5,7 @@ from django.contrib.auth.models import AbstractUser
 # Create your models here.
 class User(AbstractUser):
     """Custom User Model Classes"""
-    mobile = models.CharField(max_length=11, unique=True, verbose_name='mobile')
+    mobile = models.CharField(max_length=15, unique=True, verbose_name='mobile')
 
     class Meta:
         db_table = 'tb_users'    # Custom Table Names
@@ -14,3 +14,4 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
+

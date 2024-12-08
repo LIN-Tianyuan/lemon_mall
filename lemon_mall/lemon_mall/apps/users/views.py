@@ -5,9 +5,12 @@ import re
 from django.db import DatabaseError
 from django.urls import reverse
 from django.contrib.auth import login
+from django_redis import get_redis_connection
+
 from users.models import User
-from lemon_mall.utils.response_code import RETCODE
+from lemon_mall.utils.response_code import RETCODE, err_msg
 # Create your views here.
+
 
 class UsernameCountView(View):
     """Determine whether a username is a duplicate registration"""
@@ -32,6 +35,7 @@ class RegisterView(View):
         password = request.POST.get('password')
         password2 = request.POST.get('password2')
         mobile = request.POST.get('mobile')
+        sms_code_client = request.POST.get('sms_code')
         allow = request.POST.get('allow')
         # Check parameters: Front-end and back-end checks should be separated to avoid malicious users to cross the front-end logic to send requests, to ensure the security of the back-end, the front and back-end checks should be the same logic
         # Determine if the parameters are complete: all([list]) will check whether the elements in the list are empty, as long as one is empty, return False
@@ -47,8 +51,15 @@ class RegisterView(View):
         if password != password2:
             return http.HttpResponseForbidden('Inconsistent passwords entered twice')
         # Determine whether the cell phone number is legitimate
-        if not re.match(r'^1[3-9]\d{9}$', mobile):
+        if not re.match(r'^\+?(\d{1,3})?[- ]?(\d{10,11})$', mobile):
             return http.HttpResponseForbidden('Incorrectly formatted phone number')
+        # Determine whether the SMS verification code is entered correctly
+        redis_conn = get_redis_connection('verify_code')
+        sms_code_server = redis_conn.get('sms_%s' % mobile)
+        if sms_code_server is None:
+            return render(request, 'register.html', {'sms_code_errmsg': 'SMS verification code is no longer valid'})
+        if sms_code_client != sms_code_server.decode():
+            return render(request, 'register.html', {'sms_code_errmsg': 'Incorrectly entered SMS verification code'})
         # Determine whether to check the user agreement
         if allow != 'on':
             return http.HttpResponseForbidden('Please check the user agreement')
