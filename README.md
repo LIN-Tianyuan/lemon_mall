@@ -468,6 +468,121 @@ $ celery -A celery_tasks.main worker -l info
  # Calling the Send SMS task
  ccp_send_sms_code.delay(mobile, sms_code)
  ```
+## User login
+### Account Login
+ - Username login
+ ```bash
+ class LoginView(View):
+    """user login"""
+    def get(self, request):
+        """Provide user login page"""
+        return render(request, 'login.html')
+
+    def post(self, request):
+        """Implement user login logic"""
+        # Receiving parameters
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        remembered = request.POST.get('remembered')
+        # Calibration parameters
+        if not all([username, password]):
+            return http.HttpResponseForbidden('Absence of mandatory parameters')
+        # Determine if the username is 5-20 characters long.
+        if not re.match(r'^[+a-zA-Z0-9_-]{5,20}$', username):
+            return http.HttpResponseForbidden('Please enter the correct username or cell phone number')
+        # Determine if the password is 8-20 digits.
+        if not re.match(r'^[0-9A-Za-z]{8,20}$', password):
+            return http.HttpResponseForbidden('Password minimum 8 digits, maximum 20 digits')
+        # Authenticated Users: Use the account to check if the user exists, and if the user exists, then check if the password is correct
+        user = authenticate(username=username, password=password)
+        if user is None:
+            return render(request, 'login.html', {'account_errmsg': 'Incorrect account number or password'})
+        # Status Hold
+        login(request, user)
+        # Use remembered to determine the state retention period (to implement remembered login)
+        if remembered != 'on':
+            # No login is remembered: the state is kept until the end of the browser session and then destroyed.
+            request.session.set_expiry(0)   # The unit is seconds.
+        else:
+            # Remember to log in: status is maintained for two weeks: Default is two weeks.
+            request.session.set_expiry(None)
+        # Response Result: Redirect to home page
+        return redirect(reverse('contents:index'))
+ ```
+ ### Login multi-compte
+ ```bash
+ Django comes with a user authentication backend that uses usernames to realize user authentication by default.
+
+User authentication backend location: django.contrib.auth.backends.ModelBackend
+
+If you want to realize that both username and mobile number can authenticate users, you need to customize the user authentication backend.
+
+Steps to customize the user authentication backend
+
+Create a new utils.py file in the users application.
+Create a new class that inherits from ModelBackend.
+Override the authenticate() method.
+Query the user using the username and cell phone number respectively
+Return the queried user instance
+
+AUTHENTICATION_BACKENDS = ['users.utils.UsernameMobileAuthBackend']
+
+class UsernameMobileAuthBackend(ModelBackend):...
+ ```
+ ### Home User Name Display
+ ```bash
+ Vue reads a cookie to render user information
+ Username written to cookie
+ Vue rendering home page username
+
+response = redirect(reverse('contents:index'))
+# To enable the display of username information in the upper right corner of the home page, we need to cache the username in a cookie
+response.set_cookie('username', user.username, max_age=3600 * 24 * 15)
+# Response Result: Redirect to home page
+return response
+ ```
+
+ ### Log out
+ ```bash
+ Clearing session information
+
+ logout(request)
+
+
+The core idea of logging out of login is to clean up the status hold information cached at login.
+Since the username in the home page is read from a cookie. So when log out, need to clear the username from the cookie.
+ ```
+
+### Determine whether a user is logged in or not
+```bash
+Access to the User Center is allowed when the user is logged in.
+If the user is not logged in, access to the User Center is not allowed and the user is directed to the login screen.
+
+LOGIN_URL = '/login/'
+
+class LoginView(View):
+    ...
+    # Take out the next
+    next = request.GET.get('next')
+    if next:
+        # Redirect to next
+        response = redirect(next)
+    else:
+        # Redirect to home page
+        response = redirect(reverse('contents:index'))
+
+class UserInfoView(LoginRequiredMixin, View):
+    """User center"""
+    def get(self, request):
+        """Provide user center page"""
+        return render(request, 'user_center_info.html')
+```
+```bash
+Determining whether a user is logged in or not is still implemented using stateful hold messages.
+Many interfaces in the project require the user to be logged in to access them, so for coding convenience, we encapsulate the operation of determining the user's login into a decorator.
+The role of the next parameter is to make it easier for the user to enter the login page from where he/she is and return to where he/she is after successfully logging in.
+```
+
 ## Notice
 ```bash
 git:

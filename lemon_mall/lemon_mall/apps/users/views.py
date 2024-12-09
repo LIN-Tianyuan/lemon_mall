@@ -4,12 +4,87 @@ from django import http
 import re
 from django.db import DatabaseError
 from django.urls import reverse
-from django.contrib.auth import login
+from django.contrib.auth import login, authenticate, logout
 from django_redis import get_redis_connection
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from users.models import User
 from lemon_mall.utils.response_code import RETCODE, err_msg
 # Create your views here.
+
+
+class UserInfoView(LoginRequiredMixin, View):
+    """User center"""
+    def get(self, request):
+        """Provide user center page"""
+        # if request.user.is_authenticated:
+        #     return render(request, 'user_center_info.html')
+        # else:
+        #     return redirect(reverse('users:login'))
+        return render(request, 'user_center_info.html')
+
+class LogoutView(View):
+    """User Logout"""
+    def get(self, request):
+        """Implement user logout logic"""
+        # Clearing stateful retention information
+        logout(request)
+        # Redirect to home page after logging out
+        response = redirect(reverse('contents:index'))
+
+        # Delete username from cookie
+        response.delete_cookie('username')
+
+        # Response result
+        return response
+
+class LoginView(View):
+    """user login"""
+    def get(self, request):
+        """Provide user login page"""
+        return render(request, 'login.html')
+
+    def post(self, request):
+        """Implement user login logic"""
+        # Receiving parameters
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        remembered = request.POST.get('remembered')
+        # Calibration parameters
+        if not all([username, password]):
+            return http.HttpResponseForbidden('Absence of mandatory parameters')
+        # Determine if the username is 5-20 characters long.
+        if not re.match(r'^[+a-zA-Z0-9_-]{5,20}$', username):
+            return http.HttpResponseForbidden('Please enter the correct username or cell phone number')
+        # Determine if the password is 8-20 digits.
+        if not re.match(r'^[0-9A-Za-z]{8,20}$', password):
+            return http.HttpResponseForbidden('Password minimum 8 digits, maximum 20 digits')
+        # Authenticated Users: Use the account to check if the user exists, and if the user exists, then check if the password is correct
+        user = authenticate(username=username, password=password)
+        if user is None:
+            return render(request, 'login.html', {'account_errmsg': 'Incorrect account number or password'})
+        # Status Hold
+        login(request, user)
+        # Use remembered to determine the state retention period (to implement remembered login)
+        if remembered != 'on':
+            # No login is remembered: the state is kept until the end of the browser session and then destroyed.
+            request.session.set_expiry(0)   # The unit is seconds.
+        else:
+            # Remember to log in: status is maintained for two weeks: Default is two weeks.
+            request.session.set_expiry(None)
+
+        # Take out the next
+        next = request.GET.get('next')
+        if next:
+            # Redirect to next
+            response = redirect(next)
+        else:
+            # Redirect to home page
+            response = redirect(reverse('contents:index'))
+        # To enable the display of username information in the upper right corner of the home page, we need to cache the username in a cookie
+        response.set_cookie('username', user.username, max_age=3600 * 24 * 15)
+        # Response Result: Redirect to home page
+        return response
 
 
 class UsernameCountView(View):
@@ -72,9 +147,11 @@ class RegisterView(View):
 
         # Realization of state retention
         login(request, user)
-        # Response results: Redirect to home page
-        # return redirect('/')
-        # reverse('contents:index') == '/'
-        return redirect(reverse('contents:index'))
+
+        response = redirect(reverse('contents:index'))
+        # To enable the display of username information in the upper right corner of the home page, we need to cache the username in a cookie
+        response.set_cookie('username', user.username, max_age=3600 * 24 * 15)
+        # Response Result: Redirect to home page
+        return response
 
 

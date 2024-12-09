@@ -222,3 +222,9 @@ LOGGING = {
 
 # Specify custom user model classes: Syntax: subapplication.User Model Classes
 AUTH_USER_MODEL = 'users.User'
+
+# Specify the backend for custom user authentication
+AUTHENTICATION_BACKENDS = ['users.utils.UsernameMobileBackend']
+
+# After determining whether a user is logged in or not, specify the address to which non-logged-in users are redirected
+LOGIN_URL = '/login/'
