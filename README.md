@@ -582,6 +582,51 @@ Determining whether a user is logged in or not is still implemented using statef
 Many interfaces in the project require the user to be logged in to access them, so for coding convenience, we encapsulate the operation of determining the user's login into a decorator.
 The role of the next parameter is to make it easier for the user to enter the login page from where he/she is and return to where he/she is after successfully logging in.
 ```
+## QQ Login
+### QQ Login Development Documentation
+### Define the QQ login model class
+#### Define the model class base class
+```python
+from django.db import models
+
+class BaseModel(models.Model):
+    """Supplemental fields for model classes"""
+
+    create_time = models.DateTimeField(auto_now_add=True, verbose_name="create time")
+    update_time = models.DateTimeField(auto_now=True, verbose_name="update time")
+
+    class Meta:
+        abstract = True  # It means that it is an abstract model class, used for inheritance, and the tables of BaseModel will not be created during database migration.
+```
+#### Define the QQ login model class
+```bash
+python3 ../../manage.py startapp oauth
+```
+```python
+from django.db import models
+from lemon_mall.utils.models import BaseModel
+
+# Create your models here.
+
+class OAuthQQUser(BaseModel):
+    """QQ Login User Data"""
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE, verbose_name='user')
+    openid = models.CharField(max_length=64, verbose_name='openid', db_index=True)
+
+    class Meta:
+        db_table = 'tb_oauth_qq'
+        verbose_name = 'QQ Login User Data'
+        verbose_name_plural = verbose_name
+```
+#### Migrating the QQ login model class
+```bash
+$ python3 manage.py makemigrations
+$ python3 manage.py migrate
+```
+### QQ Login Tool 
+### OAuth2.0 authentication to get openid
+### Handling of whether an openid is bound to a user or not
+
 
 ## Notice
 ```bash

@@ -44,9 +44,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'users', # User module
-    'contents', # Home Advertising module
-    'verifications', # CAPTCHA
+    'users',  # User module
+    'contents',  # Home Advertising module
+    'verifications',  # CAPTCHA
+    'oauth',  # Third Party Login
 ]
 
 MIDDLEWARE = [
@@ -228,3 +229,8 @@ AUTHENTICATION_BACKENDS = ['users.utils.UsernameMobileBackend']
 
 # After determining whether a user is logged in or not, specify the address to which non-logged-in users are redirected
 LOGIN_URL = '/login/'
+
+# Configuration file for QQ login
+QQ_CLIENT_ID = ''
+QQ_CLIENT_SECRET = ''
+QQ_REDIRECT_URI = ''
