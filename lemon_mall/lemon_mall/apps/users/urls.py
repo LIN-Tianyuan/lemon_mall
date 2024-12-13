@@ -13,5 +13,11 @@ urlpatterns = [
     # User logout
     re_path(r'^logout/$', views.LogoutView.as_view(), name='logout'),
     # User center
-    re_path(r'^info/$', views.UserInfoView.as_view(), name='info')
+    re_path(r'^info/$', views.UserInfoView.as_view(), name='info'),
+    # Add email
+    re_path(r'^emails/$', views.EmailView.as_view()),
+    # Verify email
+    re_path(r'^emails/verification/$', views.VerifyEmailView.as_view()),
+    # User address
+    re_path(r'^addresses/$', views.AddressView.as_view(), name='address')
 ]

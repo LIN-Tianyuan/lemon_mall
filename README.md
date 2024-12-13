@@ -509,7 +509,7 @@ $ celery -A celery_tasks.main worker -l info
         # Response Result: Redirect to home page
         return redirect(reverse('contents:index'))
  ```
- ### Login multi-compte
+ - Login multi-compte
  ```bash
  Django comes with a user authentication backend that uses usernames to realize user authentication by default.
 
@@ -529,7 +529,7 @@ AUTHENTICATION_BACKENDS = ['users.utils.UsernameMobileAuthBackend']
 
 class UsernameMobileAuthBackend(ModelBackend):...
  ```
- ### Home User Name Display
+  - Home User Name Display
  ```bash
  Vue reads a cookie to render user information
  Username written to cookie
@@ -542,7 +542,7 @@ response.set_cookie('username', user.username, max_age=3600 * 24 * 15)
 return response
  ```
 
- ### Log out
+  - Log out
  ```bash
  Clearing session information
 
@@ -553,7 +553,7 @@ The core idea of logging out of login is to clean up the status hold information
 Since the username in the home page is read from a cookie. So when log out, need to clear the username from the cookie.
  ```
 
-### Determine whether a user is logged in or not
+ - Determine whether a user is logged in or not
 ```bash
 Access to the User Center is allowed when the user is logged in.
 If the user is not logged in, access to the User Center is not allowed and the user is directed to the login screen.
@@ -582,51 +582,286 @@ Determining whether a user is logged in or not is still implemented using statef
 Many interfaces in the project require the user to be logged in to access them, so for coding convenience, we encapsulate the operation of determining the user's login into a decorator.
 The role of the next parameter is to make it easier for the user to enter the login page from where he/she is and return to where he/she is after successfully logging in.
 ```
-## QQ Login
-### QQ Login Development Documentation
-### Define the QQ login model class
-#### Define the model class base class
-```python
-from django.db import models
+### QQ Login
+ - QQ Login Development Documentation
+ - Define the QQ login model class
+    - Define the model class base class
+    ```python
+    from django.db import models
 
-class BaseModel(models.Model):
-    """Supplemental fields for model classes"""
+    class BaseModel(models.Model):
+        """Supplemental fields for model classes"""
 
-    create_time = models.DateTimeField(auto_now_add=True, verbose_name="create time")
-    update_time = models.DateTimeField(auto_now=True, verbose_name="update time")
+        create_time = models.DateTimeField(auto_now_add=True, verbose_name="create time")
+        update_time = models.DateTimeField(auto_now=True, verbose_name="update time")
 
-    class Meta:
-        abstract = True  # It means that it is an abstract model class, used for inheritance, and the tables of BaseModel will not be created during database migration.
-```
-#### Define the QQ login model class
+        class Meta:
+            abstract = True  # It means that it is an abstract model class, used for inheritance, and the tables of BaseModel will not be created during database migration.
+    ```
+    - Define the QQ login model class
+    ```bash
+    python3 ../../manage.py startapp oauth
+    ```
+    ```python
+    from django.db import models
+    from lemon_mall.utils.models import BaseModel
+
+    # Create your models here.
+
+    class OAuthQQUser(BaseModel):
+        """QQ Login User Data"""
+        user = models.ForeignKey('users.User', on_delete=models.CASCADE, verbose_name='user')
+        openid = models.CharField(max_length=64, verbose_name='openid', db_index=True)
+
+        class Meta:
+            db_table = 'tb_oauth_qq'
+            verbose_name = 'QQ Login User Data'
+            verbose_name_plural = verbose_name
+    ```
+    - Migrating the QQ login model class
+    ```bash
+    $ python3 manage.py makemigrations
+    $ python3 manage.py migrate
+    ```
+ - QQ Login Tool 
+ - OAuth2.0 authentication to get openid
+ - Handling of whether an openid is bound to a user or not
+ - Openid Binding User Implementation
+
+ ## User center
+ ### Basic User Information
+ ```bash
+User model supplemented with email_active field
+Query and render basic user information
+Add mailbox
+Send mailbox validation email
+Validate mailbox
+ ```
+ - Query and render basic user information
+ ```bash
+ User model supplement email_active field
+ ```
+ ```python
+ class User(AbstractUser):
+    """Custom User Model Classes"""
+    mobile = models.CharField(max_length=15, unique=True, verbose_name='Mobile')
+    email_active = models.BooleanField(default=False, verbose_name='Email Verification Status')
+
+    ...
+ ```
+ ```bash
+ $ python manage.py makemigrations
+$ python manage.py migrate
+ ```
 ```bash
-python3 ../../manage.py startapp oauth
+Querying basic user information
 ```
 ```python
-from django.db import models
-from lemon_mall.utils.models import BaseModel
-
-# Create your models here.
-
-class OAuthQQUser(BaseModel):
-    """QQ Login User Data"""
-    user = models.ForeignKey('users.User', on_delete=models.CASCADE, verbose_name='user')
-    openid = models.CharField(max_length=64, verbose_name='openid', db_index=True)
-
-    class Meta:
-        db_table = 'tb_oauth_qq'
-        verbose_name = 'QQ Login User Data'
-        verbose_name_plural = verbose_name
+class UserInfoView(LoginRequiredMixin, View):
+    """User center"""
+    def get(self, request):
+        """Provide user center page"""
+        # If LoginRequiredMixin determines that the user is logged in, then request.user is the logged-in user object
+        context = {
+            'username': request.user.username,
+            'mobile': request.user.mobile,
+            'email': request.user.email,
+            'email_active': request.user.email_active
+        }
+        return render(request, 'user_center_info.html', context)
 ```
-#### Migrating the QQ login model class
 ```bash
-$ python3 manage.py makemigrations
-$ python3 manage.py migrate
+Rendering basic user information
 ```
-### QQ Login Tool 
-### OAuth2.0 authentication to get openid
-### Handling of whether an openid is bound to a user or not
+```javascript
+<script type="text/javascript">
+    let username = "{{ username }}";
+    let mobile = "{{ mobile }}";
+    let email = "{{ email }}";
+    let email_active = "{{ email_active }}";
+</script>
+<script type="text/javascript" src="{{ static('js/common.js') }}"></script>
+<script type="text/javascript" src="{{ static('js/user_center_info.js') }}"></script>
 
+data: {
+    username: username,
+    mobile: mobile,
+    email: email,
+    email_active: email_active,
+},
+```
+### Add email
+```python
+class EmailView(LoginRequiredJSONMixin, View):
+    """Add email"""
+    def put(self, request):
+        # Receive parameter
+        json_str = request.body.decode()    # The body type is bytes
+        json_dict = json.loads(json_str)
+        email = json_dict.get('email')
+        # Check parameter
+        if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
+            return http.HttpResponseForbidden('The parameter email is incorrect')
+        # Save the user's incoming mailbox into the email field of the database user
+        try:
+            request.user.email = email
+            request.user.save()
+        except Exception as e:
+            logger.error(e)
+            return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': 'Failed to add mailbox'})
+        # Response result
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+```
+```bash
+Determine whether the user is logged in and return JSON
+Only when the user is logged in can be allowed to bind the mailbox.
+At this time, the data type of front-end and back-end interaction is JSON, so need to determine whether the user is logged in and return JSON to the user.
+```
+```python
+# utils/views.py
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django import http
+
+from lemon_mall.utils.response_code import RETCODE
+
+class LoginRequiredJSONMixin(LoginRequiredMixin):
+    def handle_no_permission(self):
+        """Direct Response JSON Data"""
+        return http.JsonResponse({'code': RETCODE.SESSIONERR, 'errmsg': 'User is not logged in'})
+```
+#### Configuring Django to send emails
+```
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' # Specify mail backend
+EMAIL_HOST = 'smtp.gmail.com' # Email Hosting
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'sgsgkxkx@gmail.com' # Authorized mailboxes
+EMAIL_HOST_PASSWORD = '' # Password obtained during mailbox authorization, not the registered login password
+EMAIL_FROM = 'LemonMall<sgsgkxkx@gmail.com>' # Sender's letterhead
+```
+#### Send Email Verification Email
+Sending email verification emails is a time-consuming operation that can't block the response from the lemon mall, so you need to send emails asynchronously.
+Continue to use Celery to implement the asynchronous task.
+```python
+# email/tasks.py
+# bind: It is guaranteed that the task object will be automatically passed as the first argument
+# name: asynchronous task alias
+# retry_backoff: Exception Auto-Retry Interval n times(retry_backoff x 2^(n-1))s
+# max_retries: Maximum number of automatic retries for exceptions
+@celery_app.task(bind=True, name='send_verify_email', retry_backoff=3)
+def send_verify_email(self, to_email, verify_url):
+    """Define tasks for sending validation emails"""
+    # send_mail('title', 'message', 'sender', 'receiver list', 'rich text(html)')
+
+    subject = "Lemon Mall Email Verification"
+    html_message = '<p>Dear users, </p>' \
+                '<p>Thank you for using Lemon Mall.</p>' \
+                '<p>Your e-mail address is: %s . Please click on this link to activate your mailbox:</p>' \
+                '<p><a href="%s">%s<a></p>' % (to_email, verify_url, verify_url)
+    try:
+        send_mail(subject, '', settings.EMAIL_FROM, [to_email], html_message=html_message)
+    except Exception as e:
+        # trigger an error retry: Maximum 3 tentatives
+        raise self.retry(exec, max_retries=3)
+```
+For the asynchronous task of sending emails, we use Django configuration files.
+So we need to modify celery's startup file main.py.
+In it, specify the Django configuration files that celery can read.
+Finally, register the newly added email task.
+```python
+# main.py
+import os
+if not os.getenv('DJANGO_SETTINGS_MODULE'):
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'lemon_mall.settings.dev'
+
+# Creating a Celery Instance
+celery_app = Celery('lemon')
+
+# Load Configuration
+celery_app.config_from_object('celery_tasks.config')
+
+# Registration Task
+celery_app.autodiscover_tasks(['celery_tasks.sms', 'celery_tasks.email'])
+```
+Calling the Send Mail asynchronous task
+```python
+# Save the user's incoming mailbox into the email field of the database user
+try:
+    request.user.email = email
+    request.user.save()
+except Exception as e:
+    logger.error(e)
+    return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': 'Failed to add mailbox'})
+# Send Email Verification Email
+verify_url = generate_verify_email_url(request.user)
+send_verify_email.delay(email, verify_url)
+
+# Response result
+return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+```
+Start Celery
+```bash
+$ celery -A celery_tasks.main worker -l info
+```
+#### Generate email verification link
+Define a method for generating email verification links
+```python
+def generate_verify_email_url(user):
+    """Generate email activation link"""
+    s = Serializer(settings.SECRET_KEY, salt='email-confirm')
+    data = {'user_id': user.id, 'email': user.email}    # Currently logged in user
+    token = s.dumps(data)
+    return settings.EMAIL_VERIFY_URL + '?token=' + token
+
+EMAIL_VERIFY_URL = 'http://www.lemonmall.site:8000/emails/verification/'
+
+verify_url = generate_verify_email_url(request.user)
+send_verify_email.delay(email, verify_url)
+```
+#### Authentication Mailbox Backend Logic
+The heart of validating an email: it's all about setting the user's email_active field to True.
+```python
+def check_verify_email_token(token):
+    """Deserialize token, get user"""
+    s = Serializer(settings.SECRET_KEY, salt='email-confirm')
+    try:
+        data = s.loads(token, max_age=constants.VERIFY_EMAIL_TOKEN_EXPIRES)
+    except BadData:
+        return None
+    else:
+        # Get user_id and email from data
+        user_id = data.get('user_id')
+        email = data.get('email')
+        try:
+            user = User.objects.get(id=user_id, email=email)
+        except User.DoesNotExist:
+            return None
+        else:
+            return user
+
+
+class VerifyEmailView(View):
+    """verification"""
+    def get(self, request):
+        # Receive parameter
+        token = request.GET.get('token')
+        # Check parameter
+        if not token:
+            return http.HttpResponseForbidden('Missing Token')
+        # Extract user info from token  user_info => user
+        user = check_verify_email_token(token)
+        if not user:
+            return http.HttpResponseBadRequest('Invalid token')
+        # Setting the user's email_active field to True
+        try:
+            user.email_active = True
+            user.save()
+        except Exception as e:
+            logger.error(e)
+            return http.HttpResponseServerError('Failed to activate mailbox')
+        # Response Result: Redirect to User Center
+        return redirect(reverse('users:info'))
+```
 
 ## Notice
 ```bash
@@ -637,6 +872,20 @@ git reset HEAD~
 migrate:
 python manage.py makemigrations
 python manage.py migrate
+
+celery -A celery_tasks.main worker -l info
+
+# send gmail
+import certifi, os
+os.environ['SSL_CERT_FILE'] = certifi.where()
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' # Specify mail backend
+EMAIL_HOST = 'smtp.gmail.com' # Email Hosting
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'sgsgkxkx@gmail.com' # Authorized mailboxes
+EMAIL_HOST_PASSWORD = '' # Password obtained during mailbox authorization, not the registered login password
+EMAIL_FROM = 'LemonMall<sgsgkxkx@gmail.com>' # Sender's letterhead
 ```
 ## License
 

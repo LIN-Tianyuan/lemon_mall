@@ -12,13 +12,15 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 import os,sys
 from pathlib import Path
+import certifi, os
 
+os.environ['SSL_CERT_FILE'] = certifi.where()
 # View package path
 # print(sys.path)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+IP_ADDRESS = '192.168.1.14'
 # Append the package guide path to the apps package
 sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
 
@@ -31,7 +33,9 @@ SECRET_KEY = 'django-insecure-)szxdt#$e6j^sp@xeh!=2@09tnie)dzo19$-p8qbjyolztv215
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '192.168.1.14'
+]
 
 
 # Application definition
@@ -102,7 +106,7 @@ WSGI_APPLICATION = 'lemon_mall.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'HOST': '192.168.1.14',
+        'HOST': IP_ADDRESS,
         'PORT': 3306,
         'USER': 'alex',
         'PASSWORD': '123456',
@@ -114,21 +118,21 @@ DATABASES = {
 CACHES = {
     "default": { # default
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.1.14:6379/0",
+        "LOCATION": f"redis://{IP_ADDRESS}:6379/0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
     "session": { # session
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.1.14:6379/1",
+        "LOCATION": f"redis://{IP_ADDRESS}:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
     "verify_code": { # captcha
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.1.14:6379/2",
+        "LOCATION": f"redis://{IP_ADDRESS}:6379/2",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -234,3 +238,15 @@ LOGIN_URL = '/login/'
 QQ_CLIENT_ID = ''
 QQ_CLIENT_SECRET = ''
 QQ_REDIRECT_URI = ''
+
+# Mail Parameters
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' # Specify mail backend
+EMAIL_HOST = 'smtp.gmail.com' # Email Hosting
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'sgsgkxkx@gmail.com' # Authorized mailboxes
+EMAIL_HOST_PASSWORD = '' # Password obtained during mailbox authorization, not the registered login password
+EMAIL_FROM = 'LemonMall<sgsgkxkx@gmail.com>' # Sender's letterhead
+
+# Email verification link
+EMAIL_VERIFY_URL = 'http://192.168.1.14:8000/emails/verification/'

@@ -5,7 +5,8 @@ from django.contrib.auth.models import AbstractUser
 # Create your models here.
 class User(AbstractUser):
     """Custom User Model Classes"""
-    mobile = models.CharField(max_length=15, unique=True, verbose_name='mobile')
+    mobile = models.CharField(max_length=15, unique=True, verbose_name='Mobile')
+    email_active = models.BooleanField(default=False, verbose_name='Email Verification Status')
 
     class Meta:
         db_table = 'tb_users'    # Custom Table Names

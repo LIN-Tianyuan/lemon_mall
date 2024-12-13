@@ -1,4 +1,4 @@
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from itsdangerous.url_safe import URLSafeTimedSerializer as Serializer
 from django.conf import settings
 from itsdangerous import BadData
 

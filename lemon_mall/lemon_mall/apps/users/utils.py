@@ -1,8 +1,38 @@
 # Customizing the back-end of user authentication: enabling multiple account logins
 from django.contrib.auth.backends import ModelBackend
 import re
+from itsdangerous.url_safe import URLSafeTimedSerializer as Serializer
+from django.conf import settings
+from itsdangerous import BadData
 
 from users.models import User
+from . import constants
+
+
+def check_verify_email_token(token):
+    """Deserialize token, get user"""
+    s = Serializer(settings.SECRET_KEY, salt='email-confirm')
+    try:
+        data = s.loads(token, max_age=constants.VERIFY_EMAIL_TOKEN_EXPIRES)
+    except BadData:
+        return None
+    else:
+        # Get user_id and email from data
+        user_id = data.get('user_id')
+        email = data.get('email')
+        try:
+            user = User.objects.get(id=user_id, email=email)
+        except User.DoesNotExist:
+            return None
+        else:
+            return user
+
+def generate_verify_email_url(user):
+    """Generate email activation link"""
+    s = Serializer(settings.SECRET_KEY, salt='email-confirm')
+    data = {'user_id': user.id, 'email': user.email}    # Currently logged in user
+    token = s.dumps(data)
+    return settings.EMAIL_VERIFY_URL + '?token=' + token
 
 def get_user_by_account(account):
     """Getting Users by Account"""

@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.views import View
 from django import http
-import re
+import re, json, logging
 from django.db import DatabaseError
 from django.urls import reverse
 from django.contrib.auth import login, authenticate, logout
@@ -9,19 +9,84 @@ from django_redis import get_redis_connection
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from users.models import User
-from lemon_mall.utils.response_code import RETCODE, err_msg
+from lemon_mall.utils.response_code import RETCODE
+from lemon_mall.utils.views import LoginRequiredJSONMixin
+from celery_tasks.email.tasks import send_verify_email
+from users.utils import generate_verify_email_url, check_verify_email_token
 # Create your views here.
+
+# Creating log exporter
+logger = logging.getLogger('django')
+
+class AddressView(LoginRequiredMixin, View):
+    """User Delivery Address"""
+    def get(self, request):
+        return render(request, 'user_center_site.html')
+
+
+class VerifyEmailView(View):
+    """verification"""
+    def get(self, request):
+        # Receive parameter
+        token = request.GET.get('token')
+        # Check parameter
+        if not token:
+            return http.HttpResponseForbidden('Missing Token')
+        # Extract user info from token  user_info => user
+        user = check_verify_email_token(token)
+        if not user:
+            return http.HttpResponseBadRequest('Invalid token')
+        # Setting the user's email_active field to True
+        try:
+            user.email_active = True
+            user.save()
+        except Exception as e:
+            logger.error(e)
+            return http.HttpResponseServerError('Failed to activate mailbox')
+        # Response Result: Redirect to User Center
+        return redirect(reverse('users:info'))
+
+class EmailView(LoginRequiredJSONMixin, View):
+    """Add email"""
+    def put(self, request):
+        # Receive parameter
+        json_str = request.body.decode()    # The body type is bytes
+        json_dict = json.loads(json_str)
+        email = json_dict.get('email')
+        # Check parameter
+        if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
+            return http.HttpResponseForbidden('The parameter email is incorrect')
+        # Save the user's incoming mailbox into the email field of the database user
+        try:
+            request.user.email = email
+            request.user.save()
+        except Exception as e:
+            logger.error(e)
+            return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': 'Failed to add mailbox'})
+        # Send Email Verification Email
+        verify_url = generate_verify_email_url(request.user)
+        send_verify_email.delay(email, verify_url)
+
+        # Response result
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+
+
 
 
 class UserInfoView(LoginRequiredMixin, View):
     """User center"""
     def get(self, request):
         """Provide user center page"""
-        # if request.user.is_authenticated:
-        #     return render(request, 'user_center_info.html')
-        # else:
-        #     return redirect(reverse('users:login'))
-        return render(request, 'user_center_info.html')
+        # If LoginRequiredMixin determines that the user is logged in, then request.user is the logged-in user object
+        context = {
+            'username': request.user.username,
+            'mobile': request.user.mobile,
+            'email': request.user.email,
+            'email_active': request.user.email_active
+        }
+        return render(request, 'user_center_info.html', context)
+
+
 
 class LogoutView(View):
     """User Logout"""
