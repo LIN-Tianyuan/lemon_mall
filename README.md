@@ -1,5 +1,7 @@
 # Lemon Mall
 
+## [6.Product](./docs/06_product.md)
+
 ## Project preparation
  - Architecture Design
 ```bash
@@ -690,7 +692,7 @@ data: {
     email_active: email_active,
 },
 ```
-### Add email
+### Add and verify email
 ```python
 class EmailView(LoginRequiredJSONMixin, View):
     """Add email"""
@@ -862,7 +864,58 @@ class VerifyEmailView(View):
         # Response Result: Redirect to User Center
         return redirect(reverse('users:info'))
 ```
+### Delivery address
+```bash
+python3 ../../manage.py startapp areas
+```
+#### Province city district
+```python
+from django.db import models
 
+# Create your models here.
+class Area(models.Model):
+    """Province city district"""
+    name = models.CharField(max_length=20, verbose_name='Name')
+    parent = models.ForeignKey('self', on_delete=models.SET_NULL, related_name='subs', null=True, blank=True, verbose_name='Upper administrative subdivision')
+
+    class Meta:
+        db_table = 'tb_areas'
+        verbose_name = 'Provincial City District'
+        verbose_name_plural = 'Provincial City District'
+
+    def __str__(self):
+        return self.name
+```
+```bash
+A self-associated field has a foreign key pointing to itself, so models.ForeignKey('self')
+Syntax for querying child data using related_name specification parent:
+Default Area model class object.area_set syntax
+related_name='subs':
+Now Area model class object.subs syntax
+```
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+```python
+class AddressView(LoginRequiredMixin, View):
+    """User Delivery Address"""
+    def get(self, request):
+        return render(request, 'user_center_site.html')
+```
+```python
+class AreasView(View):
+    ...
+```
+ - Cache city and province data
+```python
+from django.core.cache import cache
+...
+if not area_id:  
+    province_list = cache.get('province_list')
+else:
+    sub_data = cache.get('sub_area_' + area_id)
+```
 ## Notice
 ```bash
 git:
@@ -886,6 +939,11 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'sgsgkxkx@gmail.com' # Authorized mailboxes
 EMAIL_HOST_PASSWORD = '' # Password obtained during mailbox authorization, not the registered login password
 EMAIL_FROM = 'LemonMall<sgsgkxkx@gmail.com>' # Sender's letterhead
+
+# import data
+mysql -h (database ip address) -u (database username) -p (database password) (database) < (areas.sql)
+mysql -h127.0.0.1 -uroot -pmysql lemon_mall < areas.sql
+
 ```
 ## License
 
