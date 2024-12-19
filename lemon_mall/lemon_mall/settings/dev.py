@@ -52,6 +52,8 @@ INSTALLED_APPS = [
     'contents',  # Home Advertising module
     'verifications',  # CAPTCHA
     'oauth',  # Third Party Login
+    'areas',  # Provincial, municipal and district level
+    'goods',  # Goods
 ]
 
 MIDDLEWARE = [

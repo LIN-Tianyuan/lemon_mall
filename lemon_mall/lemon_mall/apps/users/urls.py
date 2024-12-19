@@ -18,6 +18,14 @@ urlpatterns = [
     re_path(r'^emails/$', views.EmailView.as_view()),
     # Verify email
     re_path(r'^emails/verification/$', views.VerifyEmailView.as_view()),
-    # User address
-    re_path(r'^addresses/$', views.AddressView.as_view(), name='address')
+    # Show user address
+    re_path(r'^addresses/$', views.AddressView.as_view(), name='address'),
+    # Add user address
+    re_path(r'^addresses/create/$', views.AddressCreateView.as_view()),
+    # Update and delete address
+    re_path(r'^addresses/(?P<address_id>\d+)/$', views.UpdateDestroyAddressView.as_view()),
+    # Set the default address
+    re_path(r'^addresses/(?P<address_id>\d+)/default/$', views.DefaultAddressView.as_view()),
+    # Update address title
+    re_path(r'^addresses/(?P<address_id>\d+)/title/$', views.UpdateTitleAddressView.as_view())
 ]
