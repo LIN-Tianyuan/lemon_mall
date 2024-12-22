@@ -945,6 +945,49 @@ mysql -h (database ip address) -u (database username) -p (database password) (da
 mysql -h127.0.0.1 -uroot -pmysql lemon_mall < areas.sql
 
 ```
+### Virtual Machine Configuration (Ubuntu)
+ - Install vmware
+```bash
+
+```
+ - Install docker
+```bash
+sudo apt update
+sudo apt install docker.io docker-compose
+docker -v
+```
+ - Transfer of documents(FileZilla)
+```bash
+host: 192.168.1.15 # IP address of the virtual machine
+username: lin # User name for logging into the virtual machine
+password: ****** # Password for logging into the virtual machine
+
+# Error: Could not connect to server
+sudo apt update
+sudo apt install openssh-server
+
+## Check system's status
+sudo systemctl status ssh
+
+# Error: Could not connect to server
+sudo apt update
+sudo apt install vsftpd
+
+## Check system's status
+sudo systemctl status vsftpd
+
+## Start service
+sudo systemctl start vsftpd
+sudo systemctl enable vsftpd
+
+# Error: Critical file transfer error
+sudo nano /etc/vsftpd.conf
+
+write_enable=YES
+local_enable=YES
+```
+
+
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
