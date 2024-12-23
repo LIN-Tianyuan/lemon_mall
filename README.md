@@ -1,6 +1,6 @@
 # Lemon Mall
 
-## [1.Project preparation](./docs/01_project/README.md)
+## [1. Project preparation](./docs/01_project/README.md)
 ### Pivot
  - Introduction to the project
  - Project creation and configuration
@@ -20,7 +20,10 @@ create user alex identified by '123456abcdefg'; # Create a new MySQL user
 grant all on lemonmall.* to 'alex'@'%'; # Authorizing alex users to access the lemon_mall database
 flush privileges; # Refresh privileges after authorization ends
 ```
-## [6.Product](./docs/06_product.md)
+## [2. User Registration](./docs/02_user_registration/README.md)
+### Pivot
+- Show user registration page
+## [6. Product](./docs/06_product.md)
 
 ## User Registration
 ### Show user registration page

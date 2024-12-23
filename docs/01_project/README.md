@@ -53,12 +53,12 @@ External interfaces: Twilio, QQ Internet, Alipay
 ### 2.1 Create Project
 
 ```bash
-python3 -m venv lemonmall-env
-source lemonmall-env/bin/activate
-pip3 install django
+$ python3 -m venv lemonmall-env
+$ source lemonmall-env/bin/activate
+$ pip3 install django
 
-django-admin startproject lemon_mall
-python manage.py runserver
+$ django-admin startproject lemon_mall
+$ python manage.py runserver
 ```
 
 ### 2.2 Configure the development environment
@@ -153,22 +153,22 @@ Make sure we can use statements like {{ url('') }} {{ static('') }} from the tem
 ```bash
 # Ubuntu install mysql 8.0
 ## install
-sudo apt update
-sudo apt install mysql-server
+$ sudo apt update
+$ sudo apt install mysql-server
 
 ## check the system status
-sudo systemctl status mysql
+$ sudo systemctl status mysql
 
 ## root login
-sudo mysql
+$ sudo mysql
 
 ## External program login
 GRANT ALL PRIVILEGES ON *.* TO 'administrator'@'localhost' IDENTIFIED BY 'very_strong_password';
 
 ## Modify MySQL Configuration to Allow Remote Connections
-sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf
+$ sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf
 bind-address = 0.0.0.0
-sudo systemctl restart mysql
+$ sudo systemctl restart mysql
 ```
 #### 2.4.1 Create a new MySQL database
 ```bash
@@ -197,7 +197,7 @@ DATABASES = {
 ```
 #### 2.4.3 Installing the PyMySQL Extension Pack
 ```bash
-pip3 install PyMySQL
+$ pip3 install PyMySQL
 ```
  - In the `__init__.py` file in the project subdirectory of the same name
 ```python
@@ -211,23 +211,23 @@ install_as_MySQLdb()
 ```bash
 # Ubuntu install redis
 ## install
-sudo apt update
-sudo apt install redis-server
+$ sudo apt update
+$ sudo apt install redis-server
 
 ## check the system status
-sudo systemctl status redis-server
+$ sudo systemctl status redis-server
 
 ## Modify Redis Configuration to Allow Remote Connections
-sudo nano /etc/redis/redis.conf
+$ sudo nano /etc/redis/redis.conf
 bind 0.0.0.0 ::1
-sudo systemctl restart redis-server
+$ sudo systemctl restart redis-server
 
 ## Test Remote Connection
 # redis-cli -h <REDIS_IP_ADDRESS> ping
-redis-cli -h 192.168.112.134 ping # PONG
+$ redis-cli -h 192.168.112.134 ping # PONG
 ```
 ```bash
-pip3 install django-redis
+$ pip3 install django-redis
 ```
 ```bash
 # Configure the Redis Database
