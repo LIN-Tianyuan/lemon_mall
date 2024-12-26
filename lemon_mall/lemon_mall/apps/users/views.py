@@ -20,6 +20,7 @@ from . import constants
 # Creating log exporter
 logger = logging.getLogger('django')
 
+
 class UpdateTitleAddressView(LoginRequiredJSONMixin, View):
     """Update address title"""
     def put(self, request, address_id):
@@ -40,6 +41,7 @@ class UpdateTitleAddressView(LoginRequiredJSONMixin, View):
             return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': 'Failed to update address title'})
         # Response result
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'Success to update address title'})
+
 
 class DefaultAddressView(LoginRequiredJSONMixin, View):
     """Set the default address"""
@@ -236,7 +238,7 @@ class AddressView(LoginRequiredMixin, View):
 
         # construct Context
         context = {
-            'default_address_id': login_user.default_address_id,
+            'default_address_id': login_user.default_address_id or '0',
             'addresses': address_list
         }
         return render(request, 'user_center_site.html', context)
@@ -404,19 +406,19 @@ class RegisterView(View):
         # Check parameters: Front-end and back-end checks should be separated to avoid malicious users to cross the front-end logic to send requests, to ensure the security of the back-end, the front and back-end checks should be the same logic
         # Determine if the parameters are complete: all([list]) will check whether the elements in the list are empty, as long as one is empty, return False
         if not all([username, password, password2, mobile, allow]):
-            return http.HttpResponseForbidden('Missing mandatory parameters')
+            return http.HttpResponseForbidden('缺少必传参数')
         # Determine if the username is 5-20 characters long.
         if not re.match(r'^[a-zA-Z0-9_-]{5,20}$', username):
-            return http.HttpResponseForbidden('Please enter a username of 5-20 characters')
+            return http.HttpResponseForbidden('请输入5-20个字符的用户名')
         # Determine if the password is 8-20 digits.
         if not re.match(r'^[0-9A-Za-z]{8,20}$', password):
-            return http.HttpResponseForbidden('Please enter a password of 8-20 digits')
+            return http.HttpResponseForbidden('请输入8-20位的密码')
         # Determine whether the two passwords are the same
         if password != password2:
-            return http.HttpResponseForbidden('Inconsistent passwords entered twice')
+            return http.HttpResponseForbidden('两次输入的密码不一致')
         # Determine whether the cell phone number is legitimate
         if not re.match(r'^\+?(\d{1,3})?[- ]?(\d{10,11})$', mobile):
-            return http.HttpResponseForbidden('Incorrectly formatted phone number')
+            return http.HttpResponseForbidden('请输入正确的手机号码')
         # Determine whether the SMS verification code is entered correctly
         redis_conn = get_redis_connection('verify_code')
         sms_code_server = redis_conn.get('sms_%s' % mobile)
@@ -426,13 +428,13 @@ class RegisterView(View):
             return render(request, 'register.html', {'sms_code_errmsg': 'Incorrectly entered SMS verification code'})
         # Determine whether to check the user agreement
         if allow != 'on':
-            return http.HttpResponseForbidden('Please check the user agreement')
+            return http.HttpResponseForbidden('请勾选用户协议')
 
         # Preservation of registration data: is the heart of the registration business
         try:
             user = User.objects.create_user(username=username, password=password, mobile=mobile)
         except DatabaseError:
-            return render(request, 'register.html', {'register_errmsg': 'Registration Failed!'})
+            return render(request, 'register.html', {'register_errmsg': '注册失败'})
 
         # Realization of state retention
         login(request, user)

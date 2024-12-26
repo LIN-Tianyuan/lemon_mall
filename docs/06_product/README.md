@@ -30,7 +30,7 @@ For merchandise in e-commerce, there are two important concepts: the SPU and the
 ![img_docs](img_docs/03adv.png)
 
 #### 1.2.2 Define the home page ad model class
-[Details](../lemon_mall/lemon_mall/apps/contents/models.py)
+[Details](../../lemon_mall/lemon_mall/apps/contents/models.py)
 ```python
 class ContentCategory(BaseModel):
     ...
@@ -54,7 +54,7 @@ cd lemon_mall
 cd apps
 python3 ../../manage.py startapp goods
 ```
-[Details](../lemon_mall/lemon_mall/apps/goods/models.py)
+[Details](../../lemon_mall/lemon_mall/apps/goods/models.py)
 ```python
 from lemon_mall.utils.models import BaseModel
 
@@ -425,4 +425,242 @@ reserved_storage_space = 1%
 sudo docker container stop tracker
 sudo docker container start tracker
 ```
+#### 2.3.3 Enter product data and image data
+1. SQL script to enter product data
+```bash
+# $ mysql -h127.0.0.1 -uroot -pmysql lemonmall < File path/goods_data.sql
 
+$ mysql -h127.0.0.1 -ualex -p123456abcdefg lemonmall < goods_data.sql 
+```
+2. FastDFS server to enter image data
+ - Prepare a new image data compression package
+   ![img_docs](img_docs/34.png)
+ - Delete the old data directory in `Storage`
+   ![img_docs](img_docs/35.png)
+ - Copy the new image data package to Storage and unzip it.
+   ```bash
+   # Unzip command
+   sudo tar -zxvf data.tar.gz
+   ```
+   ![img_docs](img_docs/36.png)
+ - View the new `data` directory
+   ![img_docs](img_docs/37.png)
+   ![img_docs](img_docs/38.png)
+
+## 3. Home Ads
+### 3.1 Showcase HomeProductsChannel Categories
+#### 3.1.1 Analyze the data structure of homepage product channel classification
+```json
+{
+    "1":{
+        "channels":[
+            {"id":1, "name":"手机", "url":"http://shouji.jd.com/"},
+            {"id":2, "name":"相机", "url":"https://www.google.com/"}
+        ],
+        "sub_cats":[
+            {
+                "id":38, 
+                "name":"手机通讯", 
+                "sub_cats":[
+                    {"id":115, "name":"手机"},
+                    {"id":116, "name":"游戏手机"}
+                ]
+            },
+            {
+                "id":39, 
+                "name":"手机配件", 
+                "sub_cats":[
+                    {"id":119, "name":"手机壳"},
+                    {"id":120, "name":"贴膜"}
+                ]
+            }
+        ]
+    },
+    "2":{
+        "channels":[],
+        "sub_cats":[]
+    }
+}
+```
+#### 3.1.2 Check the category of the product channel on the home page
+```python
+class IndexView(View):
+   """Home Advertisement"""
+   def get(self, request):
+      """Provide homepage advertisement page"""
+      # Search and display product categories
+      # Prepare dictionaries corresponding to product categories
+      categories = OrderedDict()
+      # Check all product channels: 37 first level categories
+      channels = GoodsChannel.objects.order_by('group_id', 'sequence')
+      # Iterate over all channels
+      for channel in channels:
+         # Get the group of the current channel
+         group_id = channel.group_id
+         # Constructing a basic data framework: Only 11 groups
+         if group_id not in categories:
+            categories[group_id] = {
+               'channels': [],
+               'sub_cats': []
+            }
+
+         # Query the first level category corresponding to the current channel
+         cat1 = channel.category
+         # Add cat1 to channels
+         categories[group_id]['channels'].append({
+            'id': cat1.id,
+            'name': cat1.name,
+            'url': channel.url
+         })
+
+         # Query secondary and tertiary categories
+         for cat2 in cat1.subs.all():    # Finding secondary categories from primary categories
+            cat2.sub_cats = []  # Add a list to the secondary category that holds the tertiary category
+            for cat3 in cat2.subs.all():    # Finding a tertiary category from a secondary category
+               cat2.sub_cats.append(cat3)  # Adding third-level categories to second-level
+
+            # Add secondary category to primary category sub_cats
+            categories[group_id]['sub_cats'].append(cat2)
+
+      # Construct context
+      context = {
+         'categories': categories
+      }
+      return render(request, 'index.html', context)
+```
+#### 3.1.3 Render home page product channel categories
+```html
+<ul class="sub_menu">
+    {% for group in categories.values() %}
+    <li>
+        <div class="level1">
+            {% for channel in group.channels %}
+            <a href="{{ channel.url }}">{{ channel.name }}</a>
+            {% endfor %}
+        </div>
+        <div class="level2">
+            {% for cat2 in group.sub_cats %}
+            <div class="list_group">
+                <div class="group_name fl">{{ cat2.name }} &gt;</div>
+                <div class="group_detail fl">
+                    {% for cat3 in cat2.sub_cats %}
+                    <a href="/list/{{ cat3.id }}/1/">{{ cat3.name }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </li>
+    {% endfor %}
+</ul>
+```
+### 3.2 Display home page product ads
+#### 3.2.1 Search for product ads on the home page
+```python
+class IndexView(View):
+    """Home Advertisement"""
+    def get(self, request):
+        ...
+
+        # Check homepage advertisement data
+        # Check all advertisement categories
+        contents = OrderedDict()
+        content_categories = ContentCategory.objects.all()
+        for content_category in content_categories:
+            contents[content_category.key] = content_category.content_set.filter(status=True).order_by('sequence')   # Check out and sort the unlisted ads
+
+        # Use the advertisement category to find out the content of all advertisements corresponding to the category.
+
+        # Construct context
+        context = {
+            'categories': categories,
+            'contents': contents
+        }
+        return render(request, 'index.html', context)
+```
+#### 3.2.2 Render home page product ads
+rotating chart advertisement
+```html
+<ul class="slide">
+    {% for content in contents.index_lbt %}
+    <li><a href="{{ content.url }}"><img src="{{ content.image }}" alt="{{ content.title }}"></a></li>
+    {% endfor %}
+</ul>
+```
+Newsletters and header ads
+
+Floor advertising (first floor)
+
+Floor advertising (second floor)
+
+Floor advertising (third floor)
+
+### 3.3 Custom Django File Storage Classes
+The 'Remote file_id' field returned after uploading a file via FastDFS is the file index.
+
+The file index is stored in our MySQL database. So what will be read out in the future will also be the file index, resulting in the interface not being able to download the image.
+
+Solution:
+
+ - Rewrite the url() method of the Django file storage class.
+ - Splicing the full image download address (protocol, IP, port, file index) in the rewrite
+
+#### 3.3.1 Django file storage class url() method introduction
+![img_docs](img_docs/39.png)
+Conclusion:
+
+ - What the file storage class `url()` method does: returns the URL of the file content represented by `name`.
+
+ - The trigger for the file storage class url() method: `content.image.url`
+   - Although the `url` method of `ImageField` is called on the surface. But internally, it will call the url() method of the file storage class.
+
+ - Usage of file storage class `url()` method:
+   - We can customize Django file storage class for the purpose of overriding the `url()` method.
+   - The custom Django file storage class must provide the `url()` method.
+   - It returns the absolute URL of the file referred to by name.
+#### 3.3.2 Custom Django File Storage Classes
+Rewriting the url() method of the Django file storage class
+```python
+class FastDFSStorage(Storage):
+    """Customized File Storage Classes"""
+    def __init__(self, fdfs_base_url=None):
+        # if not fdfs_base_url:
+        #     self.fdfs_base_url = settings.FDFS_BASE_URL
+        # self.fdfs_base_url = fdfs_base_url
+        self.fdfs_base_url = fdfs_base_url or settings.FDFS_BASE_URL
+
+    def _open(self, name, mode='rb'):
+        """which is called when opening a file and must be overridden."""
+        # Since we are not currently opening a file, this method is currently useless, but it must be rewritten, so pass
+        pass
+
+    def _save(self, name, content):
+        """which will be called when the file is saved"""
+        # Because it's not currently going to save the file.
+        pass
+
+    def url(self, name):
+        """Returns the full path of the file"""
+        return self.fdfs_base_url + name
+```
+```bash
+# Specify a custom Django file storage class
+STORAGES = {
+    "default": {
+        "BACKEND": 'lemon_mall.utils.fastdfs.fdfs_storage.FastDFSStorage',
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
+# FastDFS related parameters
+FDFS_BASE_URL = 'http://192.168.112.134:8888/'
+```
+```html
+<ul class="slide">
+    {% for content in contents.index_lbt %}
+    <li><a href="{{ content.url }}"><img src="{{ content.image.url }}" alt="{{ content.title }}"></a></li>
+    {% endfor %}
+</ul>
+```

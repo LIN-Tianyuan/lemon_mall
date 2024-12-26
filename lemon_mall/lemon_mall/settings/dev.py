@@ -20,7 +20,7 @@ os.environ['SSL_CERT_FILE'] = certifi.where()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-IP_ADDRESS = '192.168.1.14'
+IP_ADDRESS = '192.168.112.134'
 # Append the package guide path to the apps package
 sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
 
@@ -34,7 +34,8 @@ SECRET_KEY = 'django-insecure-)szxdt#$e6j^sp@xeh!=2@09tnie)dzo19$-p8qbjyolztv215
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '192.168.1.14'
+    '192.168.1.14',
+    '127.0.0.1'
 ]
 
 
@@ -111,7 +112,7 @@ DATABASES = {
         'HOST': IP_ADDRESS,
         'PORT': 3306,
         'USER': 'alex',
-        'PASSWORD': '123456',
+        'PASSWORD': '123456abcdefg',
         'NAME': 'lemonmall'
     },
 }
@@ -252,3 +253,17 @@ EMAIL_FROM = 'LemonMall<sgsgkxkx@gmail.com>' # Sender's letterhead
 
 # Email verification link
 EMAIL_VERIFY_URL = 'http://192.168.1.14:8000/emails/verification/'
+
+# DEFAULT_FILE_STORAGE = 'lemon_mall.utils.fastdfs.fdfs_storage.FastDFSStorage'
+# Specify a custom Django file storage class
+STORAGES = {
+    "default": {
+        "BACKEND": 'lemon_mall.utils.fastdfs.fdfs_storage.FastDFSStorage',
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
+# FastDFS related parameters
+FDFS_BASE_URL = 'http://192.168.112.134:8888/'

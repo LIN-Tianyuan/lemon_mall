@@ -7,13 +7,13 @@ from lemon_mall.utils.models import BaseModel
 # Create your models here.
 class User(AbstractUser):
     """Custom User Model Classes"""
-    mobile = models.CharField(max_length=15, unique=True, verbose_name='Mobile')
+    mobile = models.CharField(max_length=15, unique=True, verbose_name='手机号')
     email_active = models.BooleanField(default=False, verbose_name='Email Verification Status')
     default_address = models.ForeignKey('Address', related_name='users', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='Default address')
 
     class Meta:
         db_table = 'tb_users'    # Custom Table Names
-        verbose_name = 'User'   # User
+        verbose_name = '用户'   # User
         verbose_name_plural = verbose_name
 
     def __str__(self):

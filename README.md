@@ -23,7 +23,7 @@ flush privileges; # Refresh privileges after authorization ends
 ## [2. User Registration](./docs/02_user_registration/README.md)
 ### Pivot
 - Show user registration page
-## [6. Product](./docs/06_product.md)
+## [6. Product](./docs/06_product/README.md)
 
 ## User Registration
 ### Show user registration page
