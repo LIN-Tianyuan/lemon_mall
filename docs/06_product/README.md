@@ -664,3 +664,316 @@ FDFS_BASE_URL = 'http://192.168.112.134:8888/'
     {% endfor %}
 </ul>
 ```
+
+## 4. Product List Page
+### 4.1 Product Listing Page Interface Design and Definition
+Request method
+
+Option| Program
+---|---|
+Request Method|GET
+Request address|/list/(?P<category_id>\d+)/(?P<page_num>\d+)/?sort=Sorting method
+
+```text
+# Sort by product creation time
+.../list/115/1/?sort=default
+# Sort items by price from lowest to highest
+.../list/115/1/?sort=price
+# Sort by product sales in descending order
+.../list/115/1/?sort=hot
+```
+
+Request parameters: path parameters and query parameters
+
+Parameter name | Type | Must be passed or not| Description 
+---|---|---|---|
+category_id|string|Yes|Commodity Classification ID, Tertiary Classification
+page_num|string|Yes|Current page number
+sort|string|Yes|Sorting method
+
+Response result: HTML
+```html
+list.html
+```
+
+Interface definition
+```python
+class ListView(View):
+
+    def get(self, request, category_id, page_num):
+        return render(request, 'list.html')
+```
+
+### 4.2 List page breadcrumb navigation
+1. Query list page breadcrumb navigation data
+```python
+# goods.utils.py
+def get_breadcrumb(category):
+   breadcrumb = dict(
+      cat1='',
+      cat2='',
+      cat3=''
+   )
+   if category.parent is None:
+      # First level
+      breadcrumb['cat1'] = category
+   elif category.subs.count() == 0:
+      # Third level
+      breadcrumb['cat3'] = category
+      cat2 = category.parent
+      breadcrumb['cat2'] = cat2
+      breadcrumb['cat1'] = cat2.parent
+   else:
+      # Second level
+      breadcrumb['cat2'] = category
+      breadcrumb['cat1'] = category.parent
+
+   return breadcrumb
+```
+
+```python
+class ListView(View):
+
+    def get(self, request, category_id, page_num):
+        try:
+            category = models.GoodsCategory.objects.get(id=category_id)
+        except models.GoodsCategory.DoesNotExist:
+            return http.HttpResponseNotFound('GoodsCategory does not exist')
+
+        categories = get_categories()
+        breadcrumb = get_breadcrumb(category)
+
+        context = {
+            'categories':categories,
+            'breadcrumb':breadcrumb
+        }
+        return render(request, 'list.html', context)
+```
+
+2. Render the list page breadcrumb navigation data
+```html
+<div class="breadcrumb">
+    <a href="{{ breadcrumb.cat1.url }}">{{ breadcrumb.cat1.name }}</a>
+    <span>></span>
+    <a href="javascript:;">{{ breadcrumb.cat2.name }}</a>
+    <span>></span>
+    <a href="javascript:;">{{ breadcrumb.cat3.name }}</a>
+</div>
+```
+
+### 4.3 List page paging and sorting
+#### 4.3.1 Query list page paging and sorting data
+```python
+class ListView(View):
+    """Product List Page"""
+    def get(self, request, category_id, page_num):
+        ...
+
+        # Pagination and sorted queries: category query sku, a query for multiple, one-sided model objects. Multi-party associated fields.all/filter
+        skus = category.sku_set.filter(is_launched=True).order_by(sort_field)
+
+        # Creating a Paginator
+        # Paginator('Data to be paged', 'Number of records per page')
+        paginator = Paginator(skus, 5)  # Pagination of skus with 5 records per page
+        try:
+            # Get the page the user is currently looking at(Core data)
+            page_skus = paginator.page(page_num)    # Gets the five records in the page_nums page.
+        except EmptyPage:
+            return http.HttpResponseNotFound('Empty Page')
+
+        # Get Total Pages: The front-end paging plugin requires the use
+        total_page = paginator.num_pages
+
+        # construct a context
+        context = {
+            'categories': categories,
+            'breadcrumb': breadcrumb,
+            'page_skus': page_skus,
+            'total_page': total_page,
+            'page_num': page_num,
+            'sort': sort,
+            'category_id': category_id
+        }
+        return render(request, 'list.html', context)
+```
+
+#### 4.3.2 Render list page paging and sorting data
+```html
+<div class="r_wrap fr clearfix">
+    <div class="sort_bar">
+        <a href="{{ url('goods:list', args=(category.id, page_num)) }}?sort=default" {% if sort == 'default' %}class="active"{% endif %}>默认</a>
+        <a href="{{ url('goods:list', args=(category.id, page_num)) }}?sort=price" {% if sort == 'price' %}class="active"{% endif %}>价格</a>
+        <a href="{{ url('goods:list', args=(category.id, page_num)) }}?sort=hot" {% if sort == 'hot' %}class="active"{% endif %}>人气</a>
+    </div>
+    <ul class="goods_type_list clearfix">
+        {% for sku in page_skus %}
+        <li>
+        <a href="detail.html"><img src="{{ sku.default_image.url }}"></a>
+        <h4><a href="detail.html">{{ sku.name }}</a></h4>
+        <div class="operate">
+            <span class="price">￥{{ sku.price }}</span>
+            <span class="unit">台</span>
+            <a href="#" class="add_goods" title="加入购物车"></a>
+        </div>
+        </li>
+        {% endfor %}
+    </ul>
+   <div class="pagenation">
+      <div id="pagination" class="page"></div>
+   </div>
+</div>
+```
+
+```html
+<link rel="stylesheet" type="text/css" href="{{ static('css/jquery.pagination.css') }}">
+
+<script type="text/javascript" src="{{ static('js/jquery.pagination.min.js') }}"></script>
+
+<script type="text/javascript">
+    $(function () {
+        $('#pagination').pagination({
+            currentPage: {{ page_num }},
+            totalPage: {{ total_page }},
+            callback:function (current) {
+                {#location.href = '/list/115/1/?sort=default';#}
+                location.href = '/list/{{ category.id }}/' + current + '/?sort={{ sort }}';
+            }
+        })
+    });
+</script>
+```
+
+### 4.4 List Page Top Sellers
+#### 4.4.1 Query list page hot ranking data
+Request method
+
+Option| Program
+---|---|
+Request Method|GET
+Request address|/hot/(?P<category_id>\d+)/
+
+
+Request parameters: path parameters
+
+Parameter name | Type | Must be passed or not| Description 
+---|---|---|---|
+category_id|string|Yes|Commodity Classification ID, Tertiary Classification
+
+Response result: JSON
+
+Response results| Response content
+---|---|
+code|status code
+errmsg|error message
+hot_skus[]	|Hot SKU List
+id	|SKU number
+default_image_url|	Product Default Image
+name	|Product Name
+price	|Commodity price
+
+```python
+class HotGoodsView(View):
+
+    def get(self, request, category_id):
+        skus = models.SKU.objects.filter(category_id=category_id, is_launched=True).order_by('-sales')[:2]
+
+        hot_skus = []
+        for sku in skus:
+            hot_skus.append({
+                'id':sku.id,
+                'default_image_url':sku.default_image.url,
+                'name':sku.name,
+                'price':sku.price
+            })
+
+        return http.JsonResponse({'code':RETCODE.OK, 'errmsg':'OK', 'hot_skus':hot_skus})
+```
+
+#### 4.4.2 Rendering list page hot ranking data
+```html
+<script type="text/javascript">
+    let category_id = "{{ category.id }}";
+</script>
+
+data: {
+    category_id: category_id,
+},
+
+get_hot_skus(){
+  ...
+},
+
+<div class="new_goods" v-cloak>
+   <h3>热销排行</h3>
+   <ul>
+      <li v-for="sku in hot_skus">
+         <a :href="sku.url"><img :src="sku.default_image_url"></a>
+         <h4><a :href="sku.url">[[ sku.name ]]</a></h4>
+         <div class="price">￥[[ sku.price ]]</div>
+      </li>
+   </ul>
+</div>
+```
+## 5. Product Search
+### 5.1 Full-text search solution ElasticSearch
+#### 5.1.1 Principles of full-text retrieval and search engines
+Product Search Requirements
+
+ - When a user enters a product keyword in the search box, we want to provide the user with relevant product search results.
+
+Product Search Implementation
+
+ - We can choose to use the fuzzy query `like` keyword to implement.
+ - However, the `like` keyword is extremely inefficient.
+ - The query needs to be performed on multiple fields and it is not convenient to use the `like` keyword.
+
+Full-text search scheme
+
+ - We introduce a **full-text search** scheme to realize product search.
+ - Full-text search means to search in any specified field.
+ - The full-text search scheme needs to be realized with a search engine.
+
+Search Engine Principles
+ - **Search engine** for full-text search, the data in the database will be pre-processed once, a separate index structure data.
+ - The index structure data is similar to the index search page of the Xinhua Dictionary, which contains the keywords and the corresponding relationship between the entries, and record the location of the entries. 
+ - Search engine for full-text search, the keywords in the index data for rapid comparison and search, and then find the real storage location of the data.
+
+Conclusion:
+ - Search engine to build index structure data, similar to the index search page of the Xinhua Dictionary, full-text search, keywords in the index data for rapid comparison to find, and then find the real storage location of the data.
+
+#### 5.1.2 Introduction to Elasticsearch
+The search engine of choice for full-text search is **Elasticsearch**.
+
+ - `Elasticsearch` is implemented in Java , open source search engine .
+ - It can store, search and analyze huge amounts of data quickly. Wikipedia, Stack Overflow, Github and so on are using it.
+ - Elasticsearch is based on the open source library `Lucene`. However, we can not use Lucene directly, we must write our own code to call its interface.
+
+Segmentation Explained
+
+ - Search engines need to perform word splitting when indexing data.
+ - Lexicalization is the process of breaking a sentence into **multiple words** or **phrases** that are keywords for that sentence.
+ - Elasticsearch does not support indexing Chinese words, we need to extend `elasticsearch-analysis-ik` to realize Chinese word processing.
+
+#### 5.1.3 Install Elasticsearch with Docker
+1. Get an Elasticsearch-ik Mirror
+```bash
+# Pull mirrors from the repository
+$ sudo docker image pull delron/elasticsearch-ik:2.4.6-1.0
+# Unzip the local image
+$ sudo docker load -i elasticsearch-ik-2.4.6_docker.tar
+```
+2. Configure Elasticsearch-ik
+ - Copy the `elasticsearc-2.4.6` directory to the home directory.
+ - Modify `/home/python/elasticsearc-2.4.6/config/elasticsearch.yml` line 54.
+ - Change the ip address to the local real ip address.
+
+![img_docs](img_docs/40.png)
+
+3. Run Elasticsearch-ik with Docker
+```bash
+$ sudo docker run -dti --name=elasticsearch --network=host -v /home/python/elasticsearch-2.4.6/config:/usr/share/elasticsearch/config delron/elasticsearch-ik:2.4.6-1.0
+```
+![img_docs](img_docs/41.png)
+
+![img_docs](img_docs/42.png)
+

@@ -24,6 +24,54 @@ flush privileges; # Refresh privileges after authorization ends
 ### Pivot
 - Show user registration page
 ## [6. Product](./docs/06_product/README.md)
+### Pivot
+- Commodity database table design
+- Preparation of commodity data
+- Home Ads
+- Home List Page
+### Notice
+ - Paging
+```python
+# Paging
+from django.core.paginator import Paginator, EmptyPage
+# Creating a Paginator
+# Paginator('Data to be paged', 'Number of records per page')
+paginator = Paginator(skus, 5)  # Pagination of skus with 5 records per page
+try:
+   # Get the page the user is currently looking at(Core data)
+   page_skus = paginator.page(page_num)    # Gets the five records in the page_nums page.
+except EmptyPage:
+   return http.HttpResponseNotFound('Empty Page')
+
+# Get Total Pages: The front-end paging plugin requires the use
+total_page = paginator.num_pages
+```
+```html
+<div class="r_wrap fr clearfix">
+    ......
+    <div class="pagenation">
+        <div id="pagination" class="page"></div>
+    </div>
+</div>
+
+<link rel="stylesheet" type="text/css" href="{{ static('css/jquery.pagination.css') }}">
+
+<script type="text/javascript" src="{{ static('js/jquery.pagination.min.js') }}"></script>
+
+<script type="text/javascript">
+    $(function () {
+        $('#pagination').pagination({
+            currentPage: {{ page_num }},
+            totalPage: {{ total_page }},
+            callback:function (current) {
+                {#location.href = '/list/115/1/?sort=default';#}
+                location.href = '/list/{{ category.id }}/' + current + '/?sort={{ sort }}';
+            }
+        })
+    });
+</script>
+```
+ - ElasticSearch
 
 ## User Registration
 ### Show user registration page
