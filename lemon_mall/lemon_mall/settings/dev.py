@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'haystack', # Full text search
+
     'users',  # User module
     'contents',  # Home Advertising module
     'verifications',  # CAPTCHA
@@ -267,3 +269,18 @@ STORAGES = {
 
 # FastDFS related parameters
 FDFS_BASE_URL = 'http://192.168.112.134:8888/'
+
+# Haystack
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
+        'URL': 'http://192.168.112.134:9200/', # Elasticsearch server ip address, port number fixed to 9200
+        'INDEX_NAME': 'lemon_mall', # Name of the index repository created by Elasticsearch
+    },
+}
+
+# Automatic index generation when adding, modifying, or deleting data
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
+
+# Number of records per page for haystack paging
+HAYSTACK_SEARCH_RESULTS_PER_PAGE = 5

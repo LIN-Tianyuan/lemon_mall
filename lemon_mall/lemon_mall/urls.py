@@ -15,10 +15,12 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import include,re_path
+from django.urls import include, re_path
 
 urlpatterns = [
     re_path(r'^admin/', admin.site.urls),
+    # haystack
+    re_path(r'^search/', include('haystack.urls')),
     # users
     re_path(r'^', include('users.urls', namespace='users')),
     # contents
@@ -28,5 +30,7 @@ urlpatterns = [
     # oauth
     re_path(r'^', include('oauth.urls')),
     # areas
-    re_path(r'^', include('areas.urls'))
+    re_path(r'^', include('areas.urls')),
+    # goods
+    re_path(r'^', include('goods.urls', namespace='goods'))
 ]

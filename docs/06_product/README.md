@@ -977,3 +977,200 @@ $ sudo docker run -dti --name=elasticsearch --network=host -v /home/python/elast
 
 ![img_docs](img_docs/42.png)
 
+### 5.2 Haystack extension builds indexes
+The underlying layer of `Elasticsearch` is the open source library `Lucene`, but we can't use Lucene directly, we have to write your own code to call its interface.
+
+How do we interface with the Elasticsearch server?
+ - **Haystack**
+
+#### 5.2.1 Haystack Introduction and Installation Configuration
+1. Introduction to Haystack
+
+Haystack is a framework for interfacing with search engines in Django, building a bridge between users and search engines.
+ - We can use Haystack to call Elasticsearch search engine in Django.
+
+Haystack can use different search backends (such as `Elasticsearch`, `Whoosh`, `Solr`, etc.) without modifying the code.
+
+2. Haystack Installation
+
+```bash
+$ pip3 install django-haystack
+$ pip3 install elasticsearch==2.4.1
+```
+
+3. Haystack registers applications and routes
+```python
+# dev.py
+INSTALLED_APPS = [
+    'haystack', # Full text search
+]
+```
+```python
+# urls.py
+re_path(r'^search/', include('haystack.urls')),
+```
+
+4. Haystack Configuration
+ - Configure Haystack as a search engine backend in the configuration file
+
+```python
+# Haystack
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
+        'URL': 'http://192.168.112.134:9200/', # Elasticsearch server ip address, port number fixed to 9200
+        'INDEX_NAME': 'lemon_mall', # Name of the index repository created by Elasticsearch
+    },
+}
+
+# Automatic index generation when adding, modifying, or deleting data
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
+```
+
+Important Tip:
+
+ - The `HAYSTACK_SIGNAL_PROCESSOR` configuration item ensures that when Django is up and running and new data is being generated, Haystack will still allow Elasticsearch to index the new data in real time!
+
+#### 5.2.2 Haystack builds data indexes
+1. Create Index Classes
+
+ - Indicate which fields to let the search engine index by creating an index class, that is, which fields' keywords can be used to retrieve the data.
+ - Full-text search of SKU information is performed in this project, so a new `search_indexes.py` file is created in the `goods` app to hold the index classes.
+
+```python
+from haystack import indexes
+
+from .models import SKU
+
+
+class SKUIndex(indexes.SearchIndex, indexes.Indexable):
+    """SKU Index Data Model Class"""
+    # Receive Index Fields, defining Index Fields with Documents, and rendered using the template syntax
+    text = indexes.CharField(document=True, use_template=True)
+
+    def get_model(self):
+        """Returns the indexed model class"""
+        return SKU
+
+    def index_queryset(self, using=None):
+        """Returns the query set of data to be indexed"""
+        return self.get_model().objects.filter(is_launched=True)
+```
+
+Description of indexing class SKUIndex:
+ - The fields established in `SKUIndex` can be queried with the help of `Haystack` by `Elasticsearch` search engine.
+ - The `text` field we declare as `document=True`, the table name of the field is the main keyword query field.
+ - `text` field index value can be composed of more than one database model class fields, specifically by which model class fields, we use `use_template=True` to indicate the follow-up through the template to indicate.
+
+2. Create `text` field index value template file
+ - Create the template file used by the `text field` in the `templates` directory
+ - Specifically defined in the file `templates/search/indexes/goods/sku_text.txt`
+```text
+{{ object.id }}
+{{ object.name }}
+{{ object.caption }}
+```
+Template file description: when passing keywords through the text parameter name
+ - This template specifies the `id`, `name`, and `caption` of the SKU as the index value of the `text` field for keyword indexing queries.
+
+3. Manual generation of the initial index
+```bash
+$ python manage.py rebuild_index
+```
+
+![img_docs](img_docs/43.png)
+
+#### 5.2.3 Full-text search test
+1. Preparing Test Forms
+ - Request method: GET
+ - Request address: /search/
+ - Request parameter: q
+
+```html
+<div class="search_wrap fl">
+    <form method="get" action="/search/" class="search_con">
+        <input type="text" class="input_text fl" name="q" placeholder="搜索商品">
+        <input type="submit" class="input_btn fr" name="" value="搜索">
+    </form>
+    <ul class="search_suggest fl">
+        <li><a href="#">索尼微单</a></li>
+        <li><a href="#">优惠15元</a></li>
+        <li><a href="#">美妆个护</a></li>
+        <li><a href="#">买2免1</a></li>
+    </ul>
+</div>
+```
+
+2. Full text search test results
+
+TemplateDoesNotExist at /search/
+ - The error tells us that a `search.html` file is missing from the `templates/search/` directory.
+ - The `search.html` file is used to receive and render the results of a full-text search.
+
+### 5.3 Render product search results
+#### 5.3.1 Prepare product search results page
+
+![img_docs](img_docs/44.png)
+
+#### 5.3.2 Render product search results
+
+The data returned by Haystack includes:
+ - query: search keywords
+ - paginator: paging paginator object
+ - page: the current page of the page object (traversing the objects in the `page`, you can get the `result` object)
+ - result.objects: the current traversal out of the SKU object.
+```html
+<div class="main_wrap clearfix">
+    <div class=" clearfix">
+        <ul class="goods_type_list clearfix">
+            {% for result in page %}
+            <li>
+                {# The object is the sku object. #}
+                <a href="/detail/{{ result.object.id }}/"><img src="{{ result.object.default_image.url }}"></a>
+                <h4><a href="/detail/{{ result.object.id }}/">{{ result.object.name }}</a></h4>
+                <div class="operate">
+                    <span class="price">￥{{ result.object.price }}</span>
+                    <span>{{ result.object.comments }}评价</span>
+                </div>
+            </li>
+            {% else %}
+                <p>没有找到您要查询的商品。</p>
+            {% endfor %}
+        </ul>
+        <div class="pagenation">
+            <div id="pagination" class="page"></div>
+        </div>
+    </div>
+</div>
+```
+
+#### 5.3.3 Haystack search result pagination
+1. Set the number of data items returned per page
+ - `HAYSTACK_SEARCH_RESULTS_PER_PAGE` allows you to control the number of displays per page. 
+ - Five data per page: `HAYSTACK_SEARCH_RESULTS_PER_PAGE = 5`
+
+2. Prepare a search page pager
+```html
+<div class="main_wrap clearfix">
+    <div class=" clearfix">
+        ......
+        <div class="pagenation">
+            <div id="pagination" class="page"></div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(function () {
+        $('#pagination').pagination({
+            currentPage: {{ page.number }},
+            totalPage: {{ paginator.num_pages }},
+            callback:function (current) {
+                {#window.location.href = '/search/?q=iphone&amp;page=1';#}
+                window.location.href = '/search/?q={{ query }}&page=' + current;
+            }
+        })
+    });
+</script>
+```
+
