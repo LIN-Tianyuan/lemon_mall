@@ -14,12 +14,59 @@ from lemon_mall.utils.views import LoginRequiredJSONMixin
 from celery_tasks.email.tasks import send_verify_email
 from users.utils import generate_verify_email_url, check_verify_email_token
 from . import constants
+from goods.models import SKU
 
 # Create your views here.
 
 # Creating log exporter
 logger = logging.getLogger('django')
 
+
+class UserBrowseHistory(LoginRequiredJSONMixin, View):
+    """User Browsing History"""
+    def post(self, request):
+        """Save user product browsing history"""
+        # Receive parameter
+        json_str = request.body.decode()
+        json_dict = json.loads(json_str)
+        sku_id = json_dict.get('sku_id')
+
+        # Check parameter
+        try:
+            SKU.objects.get(id=sku_id)
+        except SKU.DoesNotExist:
+            return http.HttpResponseForbidden('参数sku_id错误')
+
+        # Save sku_id to redis
+        redis_conn = get_redis_connection('history')
+        user = request.user
+        pl = redis_conn.pipeline()
+        # De-duplicate, then save, then intercept.
+        pl.lrem('history_%s' % user.id, 0, sku_id)
+        pl.lpush('history_%s' % user.id, sku_id)
+        pl.ltrim('history_%s' % user.id, 0, 4)
+        # Execute
+        pl.execute()
+
+        # Respond result
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+
+    def get(self, request):
+        # Query user product browsing history
+        redis_conn = get_redis_connection('history')
+        user = request.user
+        sku_ids = redis_conn.lrange('history_%s' % user.id, 0, -1)
+
+        skus = []
+        for sku_id in sku_ids:
+            sku = SKU.objects.get(id=sku_id)
+            skus.append({
+                'id': sku.id,
+                'name': sku.name,
+                'price': sku.price,
+                'default_image_url': sku.default_image.url
+            })
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'skus': skus})
 
 class UpdateTitleAddressView(LoginRequiredJSONMixin, View):
     """Update address title"""

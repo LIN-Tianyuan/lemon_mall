@@ -4,13 +4,106 @@ from django import http
 # Paginator (there are a million texts that need to be made into a book, first specify how many texts per page and then figure out how many pages in total)
 # Records in the database are text, we need to consider the number of records per page when paging and then figure out how many pages there are in total
 from django.core.paginator import Paginator, EmptyPage
+from django.utils import timezone   # Tools for handling time
+from datetime import datetime
 
 from goods.models import GoodsCategory
 from contents.utils import get_categories
 from goods.utils import get_breadcrumb
-from goods.models import SKU
+from goods.models import SKU, GoodsVisitCount
 from lemon_mall.utils.response_code import RETCODE
 
+class DetailVisitView(View):
+    """Statistics on the number of visits to categorized products"""
+    def post(self, request, category_id):
+        # Receive parameter, check parameter
+        try:
+            category = GoodsCategory.objects.get(id=category_id)
+        except GoodsCategory.DoesNotExist:
+            return http.HttpResponseForbidden('category_id 不存在')
+
+        # Get the date of the day
+        t = timezone.localtime()
+        # Get the time string of the day
+        today_str = '%d-%02d-%02d' % (t.year, t.month, t.day)
+        # Converts the day's time string into a datetime object, in order to match the type of the date field.
+        today_date = datetime.strptime(today_str, '%Y-%m-%d')    # Time String to Time Object
+        # Statistics on the number of visits to categorized products
+        # Determine whether the record corresponding to the specified product category exists on the same day.
+        try:
+            # If it exists, get directly to the object where the record exists
+            counts_data = GoodsVisitCount.objects.get(date=today_date, category=category)
+        except GoodsVisitCount.DoesNotExist:
+            # If it doesn't exist, the object corresponding to the record is created directly
+            counts_data = GoodsVisitCount()
+
+        try:
+            counts_data.category = category
+            counts_data.count += 1
+            counts_data.date = today_date
+            counts_data.save()
+        except Exception as e:
+            return http.HttpResponseServerError('统计失败')
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+
+
+
+class DetailView(View):
+    """Product Details Page"""
+
+    def get(self, request, sku_id):
+        """Product Details Page"""
+        # Receive parameter, check parameter
+        try:
+            sku = SKU.objects.get(id=sku_id)
+        except SKU.DoesNotExist:
+            return render(request, '404.html')
+        # Search by product category
+        categories = get_categories()
+        # Breadcrumb navigation
+        breadcrumb = get_breadcrumb(sku.category)
+        # Check Sku
+        # Construct a specification key for the current item
+        sku_specs = sku.specs.order_by('spec_id')
+        sku_key = []
+        for spec in sku_specs:
+            sku_key.append(spec.option.id)
+        # Get all SKUs of the current product
+        skus = sku.spu.sku_set.all()
+        # Construct sku dictionaries for different specification parameters (options)
+        spec_sku_map = {}
+        for s in skus:
+            # Get sku specifications
+            s_specs = s.specs.order_by('spec_id')
+            # Keys used to form the specification-parameter-sku dictionary
+            key = []
+            for spec in s_specs:
+                key.append(spec.option.id)
+            # Adding records to the specification-parameters-sku dictionary
+            spec_sku_map[tuple(key)] = s.id
+        # Get the specification information of the current product
+        goods_specs = sku.spu.specs.order_by('id')
+        # If the specification information for the current sku is incomplete, it will not be continued
+        if len(sku_key) < len(goods_specs):
+            return
+        for index, spec in enumerate(goods_specs):
+            # Copy the specification key of the current sku
+            key = sku_key[:]
+            # Options for this specification
+            spec_options = spec.options.all()
+            for option in spec_options:
+                # Find a sku that matches the current specification in the specification parameter sku dictionary
+                key[index] = option.id
+                option.sku_id = spec_sku_map.get(tuple(key))
+            spec.spec_options = spec_options
+        # Construct Context
+        context = {
+            'categories': categories,
+            'breadcrumb': breadcrumb,
+            'sku': sku,
+            'specs': goods_specs
+        }
+        return render(request, 'detail.html', context)
 
 class HotGoodsView(View):
     """top seller"""

@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'oauth',  # Third Party Login
     'areas',  # Provincial, municipal and district level
     'goods',  # Goods
+    'carts',  # Shopping cart
 ]
 
 MIDDLEWARE = [
@@ -142,6 +143,20 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
+    "history": { # User Browsing History
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"redis://{IP_ADDRESS}:6379/3",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+    "carts": { # Cart
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"redis://{IP_ADDRESS}:6379/4",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
 }
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "session"

@@ -32,5 +32,7 @@ urlpatterns = [
     # areas
     re_path(r'^', include('areas.urls')),
     # goods
-    re_path(r'^', include('goods.urls', namespace='goods'))
+    re_path(r'^', include('goods.urls', namespace='goods')),
+    # carts
+    re_path(r'^', include('carts.urls', namespace='carts'))
 ]

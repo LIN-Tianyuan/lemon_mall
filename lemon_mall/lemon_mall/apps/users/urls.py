@@ -27,5 +27,7 @@ urlpatterns = [
     # Set the default address
     re_path(r'^addresses/(?P<address_id>\d+)/default/$', views.DefaultAddressView.as_view()),
     # Update address title
-    re_path(r'^addresses/(?P<address_id>\d+)/title/$', views.UpdateTitleAddressView.as_view())
+    re_path(r'^addresses/(?P<address_id>\d+)/title/$', views.UpdateTitleAddressView.as_view()),
+    # User Browsing History
+    re_path(r'^browse_histories/$', views.UserBrowseHistory.as_view())
 ]
