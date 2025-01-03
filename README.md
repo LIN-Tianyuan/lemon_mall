@@ -102,7 +102,7 @@ b'gAN9cQAoWAEAAAAxcQF9cQIoWAUAAABjb3VudHEDSwpYCAAAAHNlbGVjdGVkcQSIdVgBAAAAMnEFfX
 >>> base64.b64decode(b)
 b'\x80\x03}q\x00(X\x01\x00\x00\x001q\x01}q\x02(X\x05\x00\x00\x00countq\x03K\nX\x08\x00\x00\x00selectedq\x04\x88uX\x01\x00\x00\x002q\x05}q\x06(h\x03K\x14h\x04\x89uu.'
 ```
-
+### 7.2 Shopping Cart Management
 ```bash
 cd lemon_mall/apps
 python3 ../../manage.py startapp carts
@@ -145,61 +145,27 @@ urlpatterns = [
     re_path(r'^carts/$', views.CartsView.as_view(), name='info')
 ]
 ```
+ - cart select all
 ```python
-# carts/views.py
-class CartsView(View):
-    ...
-    # Determine if the user is logged in
-    user = request.user
-    if user.is_authenticated:
-        # If the user is logged in, operate the Redis shopping cart
-        redis_conn = get_redis_connection('carts')
-        pl = redis_conn.pipeline()
-        # Need to save commodity data in the form of incremental calculations
-        pl.hincrby('carts_%s' % user.id, sku_id, count)
-        # Save product check status
-        if selected:
-            pl.sadd('selected_%s' % user.id, sku_id)
-        # Respond result
-        pl.execute()
-        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
-    else:
-        # Manipulate cookie shopping cart if user is not logged in
-        cart_str = request.COOKIES.get('carts')
-        if cart_str:
-            # Convert cart_str to a string of type bytes
-            cart_str_bytes = cart_str.encode()
-            # Convert cart_str_bytes to dictionary of type bytes
-            cart_dict_bytes = base64.b64decode(cart_str_bytes)
-            # Convert cart_dict_bytes to a real dictionary
-            cart_dict = pickle.loads(cart_dict_bytes)
+class CartsSelectAllView(View):
+    def put(self, request):
+        ...
+        if user is not None and user.is_authenticated:
+            ...
+            redis_cart = redis_conn.hgetall('carts_%s' % user.id)
+            # Get all the Keys in the dictionary
+            redis_sku_ids = redis_cart.keys()
+            if selected:
+                # Select all
+                redis_conn.sadd('selected_%s' % user.id, *redis_sku_ids)
+            else:
+                # Cancel select all
+                redis_conn.srem('selected_%s' % user.id, *redis_sku_ids)
         else:
-            cart_dict = {}
-
-        # Determine if the current product to be added exists in the cart_dict
-        if sku_id in cart_dict:
-            # Shopping cart already exists, incremental calculation
-            origin_count = cart_dict[sku_id]['count']
-            count += origin_count
-
-        cart_dict[sku_id] = {
-            'count': count,
-            'selected': selected
-        }
-
-        # Convert cart_dict to dictionary of type bytes
-        cart_dict_bytes = pickle.dumps(cart_dict)
-        # Convert cart_dict_bytes to a string of type bytes
-        cart_str_bytes = base64.b64decode(cart_dict_bytes)
-        # Convert cart_str_bytes to string
-        cookie_cart_str = cart_str_bytes.decode()
-
-        # Write new cart data to cookie
-        response = http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
-        response.set_cookie('carts', cookie_cart_str)
-
-        # Respond result
-        return response
+            ...
+            for sku_id in cart_dict:
+                cart_dict[sku_id]['selected'] = selected
+            ...
 ```
 
 ## License
