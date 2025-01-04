@@ -12,6 +12,7 @@ from lemon_mall.utils.response_code import RETCODE
 from oauth.models import OAuthQQUser
 from oauth.utils import generate_access_token, check_access_token
 from users.models import User
+from carts.utils import merge_carts_cookies_redis
 
 # Creating log exporter
 logger = logging.getLogger('django')
@@ -50,6 +51,9 @@ class QQAuthUserView(View):
             response = redirect(next)
             # To enable the display of username information in the upper right corner of the home page, we need to cache the username in a cookie
             response.set_cookie('username', oauth_user.user.username, max_age=3600 * 24 * 15)
+            # User login successful, merge cookie cart to redis cart
+            # User login successful, merge cookie cart to redis cart
+            response = merge_carts_cookies_redis(request=request, user=oauth_user.user, response=response)
             # Response Result: Redirect to home page
             return response
 
@@ -104,6 +108,8 @@ class QQAuthUserView(View):
         response = redirect(next)
         # To enable the display of username information in the upper right corner of the home page, we need to cache the username in a cookie
         response.set_cookie('username', oauth_qq_user.user.username, max_age=3600 * 24 * 15)
+        # User login successful, merge cookie cart to redis cart
+        response = merge_carts_cookies_redis(request=request, user=user, response=response)
         return response
 
 # Create your views here.

@@ -15,6 +15,7 @@ from celery_tasks.email.tasks import send_verify_email
 from users.utils import generate_verify_email_url, check_verify_email_token
 from . import constants
 from goods.models import SKU
+from carts.utils import merge_carts_cookies_redis
 
 # Create your views here.
 
@@ -419,6 +420,9 @@ class LoginView(View):
             response = redirect(reverse('contents:index'))
         # To enable the display of username information in the upper right corner of the home page, we need to cache the username in a cookie
         response.set_cookie('username', user.username, max_age=3600 * 24 * 15)
+
+        # User login successful, merge cookie cart to redis cart
+        response = merge_carts_cookies_redis(request=request, user=user, response=response)
         # Response Result: Redirect to home page
         return response
 
