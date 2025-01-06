@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'areas',  # Provincial, municipal and district level
     'goods',  # Goods
     'carts',  # Shopping cart
+    'orders', # Order
 ]
 
 MIDDLEWARE = [
