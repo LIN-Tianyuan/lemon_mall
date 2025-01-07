@@ -8,6 +8,8 @@ urlpatterns = [
     re_path(r'^register/$', views.RegisterView.as_view(), name='register'),
     # Determine whether a username is a duplicate registration
     re_path(r'^usernames/(?P<username>[a-zA-Z0-9_-]{5,20})/count/$', views.UsernameCountView.as_view()),
+    # Determine whether a cell phone number is a duplicate registration
+    re_path(r'^mobiles/(?P<mobile>\+?(\d{1,3})?[- ]?(\d{10,11}))/count/$', views.MobileCountView.as_view()),
     # User login
     re_path(r'^login/$', views.LoginView.as_view(), name='login'),
     # User logout

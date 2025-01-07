@@ -1,28 +1,9 @@
 # Lemon Mall
 
 ## [1. Project preparation](./docs/01_project/README.md)
-### Pivot
- - Introduction to the project
- - Project creation and configuration
-```bash
-# Create Project
-python3 -m venv lemonmall-env
-source lemonmall-env/bin/activate
-pip3 install django
 
-django-admin startproject lemon_mall
-python manage.py runserver
-```
-```bash
-# Configure mysql database
-create database lemonmall charset=utf8; # Create a new MySQL database
-create user alex identified by '123456abcdefg'; # Create a new MySQL user
-grant all on lemonmall.* to 'alex'@'%'; # Authorizing alex users to access the lemon_mall database
-flush privileges; # Refresh privileges after authorization ends
-```
 ## [2. User Registration](./docs/02_user_registration/README.md)
-### Pivot
-- Show user registration page
+
 ## [6. Product](./docs/06_product/README.md)
 ### Pivot
 - Commodity database table design
@@ -73,8 +54,64 @@ total_page = paginator.num_pages
 ```
  - ElasticSearch
 
+## Notice
+### 1. MySQL Datebase install
+```bash
+# Ubuntu install mysql 8.0
+## install
+sudo apt update
+sudo apt install mysql-server
 
+## check the system status
+sudo systemctl status mysql
 
+## root login
+sudo mysql
+
+## External program login
+GRANT ALL PRIVILEGES ON *.* TO 'administrator'@'localhost' IDENTIFIED BY 'very_strong_password';
+
+## Modify MySQL Configuration to Allow Remote Connections
+sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf
+bind-address = 0.0.0.0
+sudo systemctl restart mysql
+```
+### 2. Redis Install
+```bash
+# Ubuntu install redis
+## install
+$ sudo apt update
+$ sudo apt install redis-server
+
+## check the system status
+$ sudo systemctl status redis-server
+
+## Modify Redis Configuration to Allow Remote Connections
+$ sudo nano /etc/redis/redis.conf
+bind 0.0.0.0 ::1
+$ sudo systemctl restart redis-server
+
+## Test Remote Connection
+# redis-cli -h <REDIS_IP_ADDRESS> ping
+$ redis-cli -h 192.168.112.134 ping # PONG
+```
+### 3. Git manages project logs
+The log messages generated during the development process do not need to be managed and recorded by the code repository.
+
+The `*.log` is already ignored by default in the ignore file generated when the code repository is created.
+
+Issue:
+- The logs file directory needs to be logged and managed by the Git repository.
+- When all `*.logs` are ignored, the logs file directory is empty.
+- However, Git is not allowed to commit an empty directory to the repository.
+
+Solution:
+- Create a `.gitkeep` file in the empty files directory and commit.
+### 4. Migrate
+```bash
+python3 manage.py makemigrations
+python3 manage.py migrate
+```
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)

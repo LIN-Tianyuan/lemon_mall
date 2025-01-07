@@ -426,6 +426,12 @@ class LoginView(View):
         # Response Result: Redirect to home page
         return response
 
+class MobileCountView(View):
+    """Determine whether a cell phone number is a duplicate registration"""
+
+    def get(self, request, mobile):
+        count = User.objects.filter(mobile=mobile).count()
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'count': count})
 
 class UsernameCountView(View):
     """Determine whether a username is a duplicate registration"""
