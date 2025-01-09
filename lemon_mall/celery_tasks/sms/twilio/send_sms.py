@@ -1,6 +1,6 @@
 # Download the helper library from https://www.twilio.com/docs/python/install
-from twilio.rest import Client
 import os
+from twilio.rest import Client
 
 # Find your Account SID and Auth Token at twilio.com/console
 # and set the environment variables. See http://twil.io/secure
@@ -28,7 +28,6 @@ class CCP(object):
             from_="+17755005216",
             to=to,
         )
-        print(message.body)
         if message.status == 'queued':
             return 0
         else:

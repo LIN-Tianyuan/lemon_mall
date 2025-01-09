@@ -480,9 +480,9 @@ class RegisterView(View):
         redis_conn = get_redis_connection('verify_code')
         sms_code_server = redis_conn.get('sms_%s' % mobile)
         if sms_code_server is None:
-            return render(request, 'register.html', {'sms_code_errmsg': 'SMS verification code is no longer valid'})
+            return render(request, 'register.html', {'sms_code_errmsg': '无效的短信验证码'})
         if sms_code_client != sms_code_server.decode():
-            return render(request, 'register.html', {'sms_code_errmsg': 'Incorrectly entered SMS verification code'})
+            return render(request, 'register.html', {'sms_code_errmsg': '输入短信验证码有误'})
         # Determine whether to check the user agreement
         if allow != 'on':
             return http.HttpResponseForbidden('请勾选用户协议')

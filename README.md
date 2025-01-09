@@ -123,6 +123,18 @@ from verifications.libs.captcha.captcha import captcha
 
 text, image = captcha.generate_captcha()
 ```
+### 6. Pipeline
+ - Can send multiple commands at once and return the results at once after execution.
+ - The pipeline reduces round-trip latency by reducing the number of times the client communicates with Redis.
+```python
+# Create a Redis Pipeline
+pl = redis_conn.pipeline()
+# Adding Redis requests to the queue
+pl.setex('sms_%s' % mobile, constants.SMS_CODE_REDIS_EXPIRES, sms_code)
+pl.setex('send_flag_%s' % mobile, constants.SEND_SMS_CODE_INTERVAL, 1)
+# Execute a request
+pl.execute()
+```
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)

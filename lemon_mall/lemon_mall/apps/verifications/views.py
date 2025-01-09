@@ -51,7 +51,7 @@ class SMSCodeView(View):
         # Determine whether the user sends SMS verification code frequently
         send_flag = redis_conn.get('send_flag_%s' % mobile)
         if send_flag:
-            return http.JsonResponse({'code': RETCODE.THROTTLINGERR, 'errmsg': 'Send messages too frequently'})
+            return http.JsonResponse({'code': RETCODE.THROTTLINGERR, 'errmsg': '发送短信过于频繁'})
         # Extracting the markers for sending SMS verification codes
 
         image_code_server = redis_conn.get('img_%s' % uuid)
@@ -85,7 +85,7 @@ class SMSCodeView(View):
         # CCP().send_template_sms(mobile, f"Your verification code is {sms_code}. Please enter it correctly within 5 minutes.")
         # Sending SMS CAPTCHA with Celery
         # send_sms_code(mobile, sms_code) wrong
-        # send_sms_code.delay(mobile, sms_code)
+        send_sms_code.delay(mobile, sms_code)
 
         # Response results
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'Send SMS successfully'})

@@ -170,3 +170,82 @@ class SMSCodeView(View):
         # Response results
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'Send SMS successfully'})
 ```
+ - frontend
+```javascript
+check_sms_code() {}
+send_sms_code() {}
+```
+ - Supplement the back-end logic for SMS validation during registration
+```python
+# users/views.py
+class RegisterView(View):
+    ...
+    sms_code_client = request.POST.get('sms_code')
+    redis_conn = get_redis_connection('verify_code')
+    sms_code_server = redis_conn.get('sms_%s' % mobile)
+    if sms_code_server is None:
+        return render(request, 'register.html', {'sms_code_errmsg': 'SMS verification code is no longer valid'})
+    if sms_code_client != sms_code_server.decode():
+        return render(request, 'register.html', {'sms_code_errmsg': 'Incorrectly entered SMS verification code'})
+```
+ - Avoid sending frequent SMS verification codes
+```python
+send_flag = redis_conn.get('send_flag_%s' % mobile)
+if send_flag:
+    return http.JsonResponse({'code': RETCODE.THROTTLINGERR, 'errmsg': 'Send messages too frequently'})
+
+# Save sms code
+redis_conn.setex('sms_%s' % mobile, constants.SMS_CODE_REDIS_EXPIRES, sms_code)
+# Rewrite send_flag
+redis_conn.setex('send_flag_%s' % mobile, constants.SEND_SMS_CODE_INTERVAL, 1)
+```
+ - pipeline
+```python
+# Create a Redis Pipeline
+pl = redis_conn.pipeline()
+# Adding Redis requests to the queue
+pl.setex('sms_%s' % mobile, constants.SMS_CODE_REDIS_EXPIRES, sms_code)
+pl.setex('send_flag_%s' % mobile, constants.SEND_SMS_CODE_INTERVAL, 1)
+# Execute a request
+pl.execute()
+```
+## 3.3 Asynchronous Solutions Celery
+ - Producer - broker - Consumer
+```bash
+pip3 install -U Celery
+```
+ - Registration Tasks
+```python
+# celery_tasks/main.py
+from celery import Celery
+
+# Creating a Celery Instance
+celery_app = Celery('lemon')
+
+# Load Configuration
+celery_app.config_from_object('celery_tasks.config')
+
+# Registration Task
+celery_app.autodiscover_tasks(['celery_tasks.sms', 'celery_tasks.email'])
+```
+```python
+broker_url= "redis://127.0.0.1/10"
+```
+ - Definition Task
+```python
+# celery_tasks.sms.tasks.py
+@celery_app.task(name='send_sms_code')
+def send_sms_code(mobile, sms_code):
+    """Asynchronous Tasks for Sending SMS CAPTCHA"""
+    send_result = CCP().send_template_sms(mobile, f"Your verification code is {sms_code}. Please enter it correctly within 5 minutes.")
+    return send_result
+```
+ - Start server
+```bash
+cd ~/projects/lemon_mall/lemon_mall
+celery -A celery_tasks.main worker -l info
+```
+ - Call the Send SMS task
+```python
+ccp_send_sms_code.delay(mobile, sms_code)
+```
