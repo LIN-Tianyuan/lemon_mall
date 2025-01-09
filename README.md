@@ -4,6 +4,7 @@
 
 ## [2. User Registration](./docs/02_user_registration/README.md)
 
+## [3. Captcha](./docs/03_captcha/README.md)
 ## [6. Product](./docs/06_product/README.md)
 ### Pivot
 - Commodity database table design
@@ -111,6 +112,16 @@ Solution:
 ```bash
 python3 manage.py makemigrations
 python3 manage.py migrate
+```
+### 5. Captcha
+ - Generate graphical CAPTCHA
+```python
+# verifications/libs/captcha/captcha.py
+```
+```python
+from verifications.libs.captcha.captcha import captcha
+
+text, image = captcha.generate_captcha()
 ```
 ## License
 

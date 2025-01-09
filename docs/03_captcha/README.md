@@ -1,22 +1,45 @@
-from django.shortcuts import render
-from django.views import View
-from django_redis import get_redis_connection
-from django import http
-import random, logging
+# 3. Captcha
+## 3.1 Graphical captcha
+ - View
+```python
+# verifications/views.py
+class ImageCodeView(View):
+    """graphical captcha"""
 
-
-from verifications.libs.twilio.send_sms import CCP
-from verifications.libs.captcha.captcha import captcha
-from . import constants
-from lemon_mall.utils.response_code import RETCODE
-from celery_tasks.sms.tasks import send_sms_code
-
-# Create your views here.
-
-# Creating a log exporter
-logger = logging.getLogger('django')
-
-
+    def get(self, request, uuid):
+        pass
+```
+ - Route
+```python
+# lemon_mall/urls.py
+urlpatterns = [
+    re_path(r'^', include('verifications.urls'))
+]
+```
+```python
+# verifications/urls.py
+urlpatterns = [
+    re_path(r'^image_codes/(?P<uuid>[\w-]+)/$', views.ImageCodeView.as_view()),
+]
+```
+ - Captcha Expansion Pack
+ ```bash
+ pip install Pillow
+ ```
+- Preparing the Redis Database
+```python
+# settings/dev.py
+{
+ "verify_code": {
+    "BACKEND": "django_redis.cache.RedisCache",
+    "LOCATION": "redis://127.0.0.1:6379/2",
+    "OPTIONS": {
+        "CLIENT_CLASS": "django_redis.client.DefaultClient",
+    }
+}
+```
+- backend
+```python
 class ImageCodeView(View):
     """graphical captcha"""
 
@@ -35,7 +58,64 @@ class ImageCodeView(View):
         # Responding to results
         return http.HttpResponse(image, content_type='image/jpg')
 
+```
+ - frontend
+```javascript
+// register.js
+mounted(){
+    // Generate graphical CAPTCHA
+    this.generate_image_code();
+},
+methods: {
+    // Generate graphical CAPTCHA
+    generate_image_code(){
+        // Generate UUID。generateUUID() : Encapsulation is in the common.js file, which needs to be introduced in advance
+        this.uuid = generateUUID();
+        // Splice Graphics CAPTCHA Request Address
+        this.image_code_url = "/image_codes/" + this.uuid + "/";
+    },
+    ......
+}
+```
+```html
+<!-- register.html -->
+<li>
+    <label>Graphical CAPTCHA:</label>
+    <input type="text" name="image_code" id="pic_code" class="msg_input">
+    <img :src="image_code_url" @click="generate_image_code" alt="Graphical CAPTCHA" class="pic_code">
+    <span class="error_tip">Please fill in the graphic verification code</span>
+</li>
+```
+## 3.2 SMS CAPTCHA
+ - Twilio
+```python
+class CCP(object):
+    """Singleton class for sending SMS verification codes"""
+    def __new__(cls, *args, **kwargs):
+        # Define the initialization method of the singleton
+        # Determine if a singleton exists: what's stored in the _instance property is the singleton
+        if not hasattr(cls, '_instance'):
+            # If the singleton doesn't exist, initialize the singleton
+            cls._instance = super(CCP, cls).__new__(cls, *args, **kwargs)
 
+            cls._instance.client = Client(account_sid, auth_token)
+        # Return to the singleton
+        return cls._instance
+
+    def send_template_sms(self, to, datas):
+        """Single-case method for sending an SMS verification code"""
+        message = self.client.messages.create(
+            body=datas,
+            from_="+17755005216",
+            to=to,
+        )
+        if message.status == 'queued':
+            return 0
+        else:
+            return -1
+```
+ - backend
+```python
 class SMSCodeView(View):
     """SMS verification code"""
     def get(self, request, mobile):
@@ -44,7 +124,7 @@ class SMSCodeView(View):
         uuid = request.GET.get('uuid')
         # Calibration parameters
         if not all([image_code_client, uuid]):
-            return http.HttpResponseForbidden('缺少必传参数')
+            return http.HttpResponseForbidden('Missing mandatory parameters')
 
         # Creating an object to connect to redis
         redis_conn = get_redis_connection('verify_code')
@@ -56,13 +136,13 @@ class SMSCodeView(View):
 
         image_code_server = redis_conn.get('img_%s' % uuid)
         if image_code_server is None:
-            return http.JsonResponse({'code': RETCODE.IMAGECODEERR, 'errmsg': '图形验证码失效'})
+            return http.JsonResponse({'code': RETCODE.IMAGECODEERR, 'errmsg': 'Graphical Code no longer works'})
         # Remove graphical captcha
         redis_conn.delete('img_%s' % uuid)
         # Compare graphical CAPTCHAs
         image_code_server = image_code_server.decode()  # Convert bytes to strings and compare
         if image_code_client.lower() != image_code_server.lower():  # Lowercase and compare
-            return http.JsonResponse({'code': RETCODE.IMAGECODEERR, 'errmsg': '输入图形验证码有误'})
+            return http.JsonResponse({'code': RETCODE.IMAGECODEERR, 'errmsg': 'Incorrectly entered graphical verification code'})
         # Generate SMS verification code: Random 6-digit number
         sms_code = '%06d' % random.randint(0, 999999)
         logger.info(sms_code)   # Manual output logging of SMS verification codes
@@ -89,3 +169,4 @@ class SMSCodeView(View):
 
         # Response results
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'Send SMS successfully'})
+```
