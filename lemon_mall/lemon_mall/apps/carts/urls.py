@@ -8,5 +8,7 @@ urlpatterns = [
     # Shopping cart
     re_path(r'^carts/$', views.CartsView.as_view(), name='info'),
     # Select All Shopping Cart
-    re_path(r'carts/selection/', views.CartsSelectAllView.as_view())
+    re_path(r'carts/selection/', views.CartsSelectAllView.as_view()),
+    # Simple cart
+    re_path(r'carts/simple/', views.CartsSimpleView.as_view()),
 ]

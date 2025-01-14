@@ -8,7 +8,7 @@ from lemon_mall.utils.models import BaseModel
 class User(AbstractUser):
     """Custom User Model Classes"""
     mobile = models.CharField(max_length=15, unique=True, verbose_name='手机号')
-    email_active = models.BooleanField(default=False, verbose_name='Email Verification Status')
+    email_active = models.BooleanField(default=False, verbose_name='邮箱验证状态')
     default_address = models.ForeignKey('Address', related_name='users', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='Default address')
 
     class Meta:

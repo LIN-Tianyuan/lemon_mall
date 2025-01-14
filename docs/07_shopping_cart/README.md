@@ -127,3 +127,4 @@ def merge_carts_cookies_redis(request, user, response):
     response.delete_cookie('carts')
     return response
 ```
+ - Merge cart

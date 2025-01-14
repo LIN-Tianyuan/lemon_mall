@@ -5,55 +5,11 @@
 ## [2. User Registration](./docs/02_user_registration/README.md)
 
 ## [3. Captcha](./docs/03_captcha/README.md)
+
+## [4. User login](./docs/04_user_login/README.md)
+
+## [5. User center](./docs/05_user_center/README.md)
 ## [6. Product](./docs/06_product/README.md)
-### Pivot
-- Commodity database table design
-- Preparation of commodity data
-- Home Ads
-- Home List Page
-### Notice
- - Paging
-```python
-# Paging
-from django.core.paginator import Paginator, EmptyPage
-# Creating a Paginator
-# Paginator('Data to be paged', 'Number of records per page')
-paginator = Paginator(skus, 5)  # Pagination of skus with 5 records per page
-try:
-   # Get the page the user is currently looking at(Core data)
-   page_skus = paginator.page(page_num)    # Gets the five records in the page_nums page.
-except EmptyPage:
-   return http.HttpResponseNotFound('Empty Page')
-
-# Get Total Pages: The front-end paging plugin requires the use
-total_page = paginator.num_pages
-```
-```html
-<div class="r_wrap fr clearfix">
-    ......
-    <div class="pagenation">
-        <div id="pagination" class="page"></div>
-    </div>
-</div>
-
-<link rel="stylesheet" type="text/css" href="{{ static('css/jquery.pagination.css') }}">
-
-<script type="text/javascript" src="{{ static('js/jquery.pagination.min.js') }}"></script>
-
-<script type="text/javascript">
-    $(function () {
-        $('#pagination').pagination({
-            currentPage: {{ page_num }},
-            totalPage: {{ total_page }},
-            callback:function (current) {
-                {#location.href = '/list/115/1/?sort=default';#}
-                location.href = '/list/{{ category.id }}/' + current + '/?sort={{ sort }}';
-            }
-        })
-    });
-</script>
-```
- - ElasticSearch
 
 ## Notice
 ### 1. MySQL Datebase install
@@ -135,6 +91,119 @@ pl.setex('send_flag_%s' % mobile, constants.SEND_SMS_CODE_INTERVAL, 1)
 # Execute a request
 pl.execute()
 ```
+### 7. Celery
+ - celery_tasks/
+### 8. Gmail
+```python
+# Mail Parameters
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' # Specify mail backend
+EMAIL_HOST = 'smtp.gmail.com' # Email Hosting
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'sgsgkxkx@gmail.com' # Authorized mailboxes
+# Find the App passwords
+# https://accounts.google.com/v3/signin/challenge/pwd?TL=AO-GBTch9TnaMKIgOG9WZGtoEipRq50kpVp6zG2csA69EoLO6LyvHCfNfNzljPje&cid=2&continue=https%3A%2F%2Fmyaccount.google.com%2Fapppasswords%3Frapt%3DAEjHL4NjUGNYui7C_gznx1LBGc8apn4J8UorQtO7o_CbyRxe6fie1NDyS0tCDfopemMhyhO2zJ-sk8YIkt_8mL2PgeNScEIvwhZXhQouwuIU7QZZbeAJa5g&flowName=GlifWebSignIn&followup=https%3A%2F%2Fmyaccount.google.com%2Fapppasswords%3Frapt%3DAEjHL4NjUGNYui7C_gznx1LBGc8apn4J8UorQtO7o_CbyRxe6fie1NDyS0tCDfopemMhyhO2zJ-sk8YIkt_8mL2PgeNScEIvwhZXhQouwuIU7QZZbeAJa5g&ifkv=AVdkyDmhNDjhNVRezacg9VQBm1mYFxtRHjWMcYWkuJ40NOkb_Pe4Cj_e1Lw37kQ5_6aTJYSn8wMolw&osid=1&rart=ANgoxcePLST8yBfyW30pYA8wycMl-do56TvzrEEVB5yu-iaAIKHv8mob2_g0h5qWeH2cKQocCvKuaL_QOywIRbG6Hm9o3BwPC2KIti0G0GjBdGHn83awOcE&rpbg=1&service=accountsettings
+EMAIL_HOST_PASSWORD = '' # Password obtained during mailbox authorization, not the registered login password
+EMAIL_FROM = 'LemonMall<sgsgkxkx@gmail.com>' # Sender's letterhead
+```
+```python
+from django.core.mail import send_mail
+def send_verify_email(self, to_email, verify_url):
+    """Define tasks for sending validation emails"""
+    # send_mail('title', 'message', 'sender', 'receiver list', 'rich text(html)')
+
+    subject = "Lemon Mall Email Verification"
+    html_message = '<p>Dear users, </p>'
+                   '<p>Thank you for using Lemon Mall.</p>'
+                   '<p>Your e-mail address is: %s . Please click on this link to activate your mailbox:</p>'
+                   '<p><a href="%s">%s<a></p>' % (to_email, verify_url, verify_url)
+    try:
+        send_mail(subject, '', settings.EMAIL_FROM, [to_email], html_message=html_message)
+    except Exception as e:
+        # trigger an error retry: Maximum 3 tentatives
+        raise self.retry(exc=e, max_retries=3)
+```
+### 9. Cache
+ - Not frequently changing data
+```python
+from django.core.cache import cache
+
+class AreasView(View):
+
+    def get(self, request):
+        area_id = request.GET.get('area_id')
+
+        if not area_id:
+            province_list = cache.get('province_list')
+
+            if not province_list:
+                ...
+                cache.set('province_list', province_list, 3600)
+
+            return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'province_list': province_list})
+        else:
+            sub_data = cache.get('sub_area_' + area_id)
+
+            if not sub_data:
+                ...
+                cache.set('sub_area_' + area_id, sub_data, 3600)
+
+            return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'sub_data': sub_data})
+```
+### 10. Paging
+```python
+# Paging
+from django.core.paginator import Paginator, EmptyPage
+# Creating a Paginator
+# Paginator('Data to be paged', 'Number of records per page')
+paginator = Paginator(skus, 5)  # Pagination of skus with 5 records per page
+try:
+   # Get the page the user is currently looking at(Core data)
+   page_skus = paginator.page(page_num)    # Gets the five records in the page_nums page.
+except EmptyPage:
+   return http.HttpResponseNotFound('Empty Page')
+
+# Get Total Pages: The front-end paging plugin requires the use
+total_page = paginator.num_pages
+```
+```html
+<div class="r_wrap fr clearfix">
+    ......
+    <div class="pagenation">
+        <div id="pagination" class="page"></div>
+    </div>
+</div>
+
+<link rel="stylesheet" type="text/css" href="{{ static('css/jquery.pagination.css') }}">
+
+<script type="text/javascript" src="{{ static('js/jquery.pagination.min.js') }}"></script>
+
+<script type="text/javascript">
+    $(function () {
+        $('#pagination').pagination({
+            currentPage: {{ page_num }},
+            totalPage: {{ total_page }},
+            callback:function (current) {
+                {#location.href = '/list/115/1/?sort=default';#}
+                location.href = '/list/{{ category.id }}/' + current + '/?sort={{ sort }}';
+            }
+        })
+    });
+</script>
+```
+### 11. ElasticSearch
+```bash
+sudo docker image pull delron/elasticsearch-ik:2.4.6-1.0
+```
+ - Change the ip address to the real ip address of the local machine.
+```bash
+# /home/python/elasticsearc-2.4.6/config/elasticsearch.yml
+network.host: 192.168.103.158
+```
+```bash
+sudo docker run -dti --name=elasticsearch --network=host -v /home/python/elasticsearch-2.4.6/config:/usr/share/elasticsearch/config delron/elasticsearch-ik:2.4.6-1.0
+```
+
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)

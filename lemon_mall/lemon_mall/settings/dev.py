@@ -268,6 +268,7 @@ EMAIL_USE_TLS = True
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'sgsgkxkx@gmail.com' # Authorized mailboxes
 EMAIL_HOST_PASSWORD = '' # Password obtained during mailbox authorization, not the registered login password
+# App passwords
 EMAIL_FROM = 'LemonMall<sgsgkxkx@gmail.com>' # Sender's letterhead
 
 # Email verification link

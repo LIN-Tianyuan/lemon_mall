@@ -1174,4 +1174,4 @@ The data returned by Haystack includes:
 </script>
 ```
 ## 6. Product Detail Page
-### 6.1 
+## 7. User Browsing History

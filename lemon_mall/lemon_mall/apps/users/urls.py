@@ -30,6 +30,8 @@ urlpatterns = [
     re_path(r'^addresses/(?P<address_id>\d+)/default/$', views.DefaultAddressView.as_view()),
     # Update address title
     re_path(r'^addresses/(?P<address_id>\d+)/title/$', views.UpdateTitleAddressView.as_view()),
+    # Change password
+    re_path(r'^pass/$', views.ChangePasswordView.as_view(), name='pass'),
     # User Browsing History
     re_path(r'^browse_histories/$', views.UserBrowseHistory.as_view())
 ]

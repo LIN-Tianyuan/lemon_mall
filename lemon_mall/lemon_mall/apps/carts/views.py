@@ -7,6 +7,45 @@ from lemon_mall.utils.response_code import RETCODE
 
 from goods.models import SKU
 
+class CartsSimpleView(View):
+    """Shopping cart in the upper right corner of the product page"""
+
+    def get(self, request):
+        # Determine whether a user is logged in or not
+        user = request.user
+        if user.is_authenticated:
+            # User is logged in, querying Redis shopping carts
+            redis_conn = get_redis_connection('carts')
+            redis_cart = redis_conn.hgetall('carts_%s' % user.id)
+            cart_selected = redis_conn.smembers('selected_%s' % user.id)
+            # Unify the format of the two data in redis with the format in the cookie to facilitate unified querying
+            cart_dict = {}
+            for sku_id, count in redis_cart.items():
+                cart_dict[int(sku_id)] = {
+                    'count': int(count),
+                    'selected': sku_id in cart_selected
+                }
+        else:
+            # User not logged in, query cookie shopping cart
+            cart_str = request.COOKIES.get('carts')
+            if cart_str:
+                cart_dict = pickle.loads(base64.b64decode(cart_str.encode()))
+            else:
+                cart_dict = {}
+        # Construct Simple Shopping Cart JSON Data
+        cart_skus = []
+        sku_ids = cart_dict.keys()
+        skus = SKU.objects.filter(id__in=sku_ids)
+        for sku in skus:
+            cart_skus.append({
+                'id':sku.id,
+                'name':sku.name,
+                'count':cart_dict.get(sku.id).get('count'),
+                'default_image_url': sku.default_image.url
+            })
+
+        return http.JsonResponse({'code':RETCODE.OK, 'errmsg':'OK', 'cart_skus':cart_skus})
+
 
 class CartsSelectAllView(View):
     """Select All Shopping Cart"""
