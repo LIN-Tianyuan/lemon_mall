@@ -2,7 +2,7 @@
 
 ## [1. Project preparation](./docs/01_project/README.md)
 
-## [2. User Registration](./docs/02_user_registration/README.md)
+## [2. User registration](./docs/02_user_registration/README.md)
 
 ## [3. Captcha](./docs/03_captcha/README.md)
 
@@ -10,7 +10,9 @@
 
 ## [5. User center](./docs/05_user_center/README.md)
 ## [6. Product](./docs/06_product/README.md)
-
+## [7. Shopping cart](./docs/07_shopping_cart/README.md)
+## [8. Order](./docs/08_order/README.md)
+## [9. Payment](./docs/09_payment/README.md)
 ## Notice
 ### 1. MySQL Datebase install
 ```bash
@@ -203,7 +205,40 @@ network.host: 192.168.103.158
 ```bash
 sudo docker run -dti --name=elasticsearch --network=host -v /home/python/elasticsearch-2.4.6/config:/usr/share/elasticsearch/config delron/elasticsearch-ik:2.4.6-1.0
 ```
+### 12. Transaction
+```python
+from django.db import transaction
 
+# Create a save point
+save_id = transaction.savepoint()  
+# Rollback to save point
+transaction.savepoint_rollback(save_id)
+# Commit all database transaction operations from the save point to the current state
+transaction.savepoint_commit(save_id)
+```
+```python
+class OrderCommitView(LoginRequiredMixin, View):
+    """Submit order"""
+    def post(self, request):
+        ...
+        # Explicitly open of a transaction
+        with transaction.atomic():
+            # Savepoints need to be specified before database operations(Preserve the initial state of the database)
+            save_id = transaction.savepoint()
+            # brute force rollback
+            try:
+                ...
+                order.save()
+            except Exception as e:
+                transaction.savepoint_rollback(save_id)
+                return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': 'Failure'})
+
+            # Successful database operation, Explicitly commit a transaction
+            transaction.savepoint_commit(save_id)
+
+
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'order_id': order_id})
+```
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)

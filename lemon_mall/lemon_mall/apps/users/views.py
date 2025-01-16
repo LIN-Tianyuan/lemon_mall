@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.contrib.auth import login, authenticate, logout
 from django_redis import get_redis_connection
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.paginator import Paginator, EmptyPage
 
 from users.models import User, Address
 from lemon_mall.utils.response_code import RETCODE
@@ -16,11 +17,45 @@ from users.utils import generate_verify_email_url, check_verify_email_token
 from . import constants
 from goods.models import SKU
 from carts.utils import merge_carts_cookies_redis
+from orders.models import OrderInfo, OrderGoods
+
 
 # Create your views here.
 
 # Creating log exporter
 logger = logging.getLogger('django')
+
+
+class UserOrderInfoView(LoginRequiredMixin, View):
+    def get(self, request, page_num):
+        user = request.user
+        orders = user.orderinfo_set.all().order_by("-create_time")
+        for order in orders:
+            order.status_name = OrderInfo.ORDER_STATUS_CHOICES[order.status-1][1]
+            order.pay_method_name = OrderInfo.PAY_METHOD_CHOICES[order.pay_method-1][1]
+            order.sku_list = []
+            order_goods = order.skus.all()
+            for order_good in order_goods:
+                sku = order_good.sku
+                sku.count = order_good.count
+                sku.amount = sku.price * sku.count
+                order.sku_list.append(sku)
+
+        page_num = int(page_num)
+        try:
+            paginator = Paginator(orders, 5)
+            page_orders = paginator.page(page_num)
+            total_page = paginator.num_pages
+        except EmptyPage:
+            return http.HttpResponseNotFound('订单不存在')
+
+        context = {
+            "page_orders": page_orders,
+            'total_page': total_page,
+            'page_num': page_num,
+            'username': request.user.username
+        }
+        return render(request, "user_center_order.html", context)
 
 
 class UserBrowseHistory(LoginRequiredJSONMixin, View):

@@ -33,5 +33,7 @@ urlpatterns = [
     # Change password
     re_path(r'^pass/$', views.ChangePasswordView.as_view(), name='pass'),
     # User Browsing History
-    re_path(r'^browse_histories/$', views.UserBrowseHistory.as_view())
+    re_path(r'^browse_histories/$', views.UserBrowseHistory.as_view()),
+    # My order
+    re_path(r'^orders/info/(?P<page_num>\d+)/$', views.UserOrderInfoView.as_view(), name='order'),
 ]

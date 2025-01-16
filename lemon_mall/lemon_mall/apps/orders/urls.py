@@ -6,5 +6,9 @@ app_name = 'orders'
 
 urlpatterns = [
     # settlement order
-    re_path(r'^orders/settlement/$', views.OrderSettlementView.as_view(), name='settlement')
+    re_path(r'^orders/settlement/$', views.OrderSettlementView.as_view(), name='settlement'),
+    # submit order
+    re_path(r'^orders/commit/$', views.OrderCommitView.as_view()),
+    # Submit Order Success
+    re_path(r'^orders/success/$', views.OrderSuccessView.as_view())
 ]

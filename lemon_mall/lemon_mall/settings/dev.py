@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'goods',  # Goods
     'carts',  # Shopping cart
     'orders', # Order
+    'payment',  # Payment
 ]
 
 MIDDLEWARE = [
@@ -303,3 +304,7 @@ HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
 # Number of records per page for haystack paging
 HAYSTACK_SEARCH_RESULTS_PER_PAGE = 5
 
+ALIPAY_APPID = '9021000143659034'
+ALIPAY_DEBUG = True
+ALIPAY_URL = 'https://openapi-sandbox.dl.alipaydev.com/gateway.do'
+ALIPAY_RETURN_URL = 'http://127.0.0.1:8000/payment/status/'
