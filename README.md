@@ -239,6 +239,43 @@ class OrderCommitView(LoginRequiredMixin, View):
 
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'order_id': order_id})
 ```
+
+### 13. Timed task
+```bash
+pip3 install django-crontab
+```
+```python
+# settings/dev.py
+INSTALLED_APPS = [    
+    'django_crontab', # timed task
+]
+
+CRONJOBS = [
+    # Generate homepage static files every 1 minute
+    ('*/1 * * * *', 'contents.crons.generate_static_index_html', '>> ' + os.path.join(os.path.dirname(BASE_DIR), 'logs/crontab.log'))
+]
+
+CRONTAB_COMMAND_PREFIX = 'LANG_ALL=zh_cn.UTF-8'
+```
+```bash
+# Add timed tasks to the system
+$ python manage.py crontab add
+
+# crontab: no crontab for citron
+# adding cronjob: (afe82496b5176d7774b91d3a15136d68) -> ('*/1 * * * *', 'contents.crons.generate_static_index_html', '>> /Users/citron/Documents/GitHub/lemon_mall/lemon_mall/logs/crontab.log')
+
+# Show activated timed tasks
+$ python manage.py crontab show
+
+# Remove Timed Tasks
+$ python manage.py crontab remove
+```
+
+### 14. Git
+```bash
+# Cancel commit
+git reset --soft HEAD^
+```
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)

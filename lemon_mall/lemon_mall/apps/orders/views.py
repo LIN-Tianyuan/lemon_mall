@@ -14,6 +14,88 @@ from goods.models import SKU
 from orders.models import OrderInfo, OrderGoods
 from lemon_mall.utils.response_code import RETCODE
 # Create your views here.
+class OrderCommentView(LoginRequiredMixin, View):
+    """Order Product Evaluation"""
+
+    def get(self, request):
+        """Show product evaluation page"""
+        # Reception parameters
+        order_id = request.GET.get('order_id')
+        # Check parameters
+        try:
+            OrderInfo.objects.get(order_id=order_id, user=request.user)
+        except OrderInfo.DoesNotExist:
+            return http.HttpResponseNotFound('订单不存在')
+
+        # Check the information of the products that have not been evaluated in the order.
+        try:
+            uncomment_goods = OrderGoods.objects.filter(order_id=order_id, is_commented=False)
+        except Exception:
+            return http.HttpResponseServerError('订单商品信息出错')
+
+        # Constructing data on commodities to be evaluated
+        uncomment_goods_list = []
+        for goods in uncomment_goods:
+            uncomment_goods_list.append({
+                'order_id':goods.order.order_id,
+                'sku_id':goods.sku.id,
+                'name':goods.sku.name,
+                'price':str(goods.price),
+                'default_image_url':goods.sku.default_image.url,
+                'comment':goods.comment,
+                'score':goods.score,
+                'is_anonymous':str(goods.is_anonymous),
+            })
+
+        # Render templates
+        context = {
+            'uncomment_goods_list': uncomment_goods_list
+        }
+        return render(request, 'goods_judge.html', context)
+
+    def post(self, request):
+        """Evaluate Ordered Products"""
+        # Receive parameters
+        json_dict = json.loads(request.body.decode())
+        order_id = json_dict.get('order_id')
+        sku_id = json_dict.get('sku_id')
+        score = json_dict.get('score')
+        comment = json_dict.get('comment')
+        is_anonymous = json_dict.get('is_anonymous')
+        # Check parameters
+        if not all([order_id, sku_id, score, comment]):
+            return http.HttpResponseForbidden('缺少必传参数')
+        try:
+            OrderInfo.objects.filter(order_id=order_id, user=request.user, status=OrderInfo.ORDER_STATUS_ENUM['UNCOMMENT'])
+        except OrderInfo.DoesNotExist:
+            return http.HttpResponseForbidden('参数order_id错误')
+        try:
+            sku = SKU.objects.get(id=sku_id)
+        except SKU.DoesNotExist:
+            return http.HttpResponseForbidden('参数sku_id错误')
+        if is_anonymous:
+            if not isinstance(is_anonymous, bool):
+                return http.HttpResponseForbidden('参数is_anonymous错误')
+
+        # Saving order product evaluation data
+        OrderGoods.objects.filter(order_id=order_id, sku_id=sku_id, is_commented=False).update(
+            comment=comment,
+            score=score,
+            is_anonymous=is_anonymous,
+            is_commented=True
+        )
+
+        # Cumulative comment data
+        sku.comments += 1
+        sku.save()
+        sku.spu.comments += 1
+        sku.spu.save()
+
+        # If all orders have been evaluated, change the order status to Completed.
+        if OrderGoods.objects.filter(order_id=order_id, is_commented=False).count() == 0:
+            OrderInfo.objects.filter(order_id=order_id).update(status=OrderInfo.ORDER_STATUS_ENUM['FINISHED'])
+
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '评价成功'})
 
 class OrderSuccessView(LoginRequiredMixin, View):
     """Submit Order Success Page"""

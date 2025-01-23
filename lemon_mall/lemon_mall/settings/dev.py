@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'haystack', # Full text search
+    'django_crontab',
 
     'users',  # User module
     'contents',  # Home Advertising module
@@ -112,7 +113,7 @@ WSGI_APPLICATION = 'lemon_mall.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
+    'default': {    # Write(Master)
         'ENGINE': 'django.db.backends.mysql',
         'HOST': IP_ADDRESS,
         'PORT': 3306,
@@ -120,6 +121,14 @@ DATABASES = {
         'PASSWORD': '123456abcdefg',
         'NAME': 'lemonmall'
     },
+    'slave': {      # Read(Slave)
+        'ENGINE': 'django.db.backends.mysql',
+        'HOST': IP_ADDRESS,
+        'PORT': 8306,
+        'USER': 'root',
+        'PASSWORD': 'mysql',
+        'NAME': 'lemonmall'
+    }
 }
 
 # Configure the Redis Database
@@ -308,3 +317,15 @@ ALIPAY_APPID = '9021000143659034'
 ALIPAY_DEBUG = True
 ALIPAY_URL = 'https://openapi-sandbox.dl.alipaydev.com/gateway.do'
 ALIPAY_RETURN_URL = 'http://127.0.0.1:8000/payment/status/'
+
+# Timer Configuration
+CRONJOBS = [
+    # Generate homepage static files every 1 minute
+    ('*/1 * * * *', 'contents.crons.generate_static_index_html', '>> ' + os.path.join(os.path.dirname(BASE_DIR), 'logs/crontab.log'))
+]
+
+# Specify Chinese encoding format
+CRONTAB_COMMAND_PREFIX = 'LANG_ALL=zh_cn.UTF-8'
+
+# Mysql Read/Write Separation Route
+DATABASE_ROUTERS = ['lemon_mall.utils.db_router.MasterSlaveDBRouter']

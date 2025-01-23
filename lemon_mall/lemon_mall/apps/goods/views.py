@@ -7,11 +7,28 @@ from django.core.paginator import Paginator, EmptyPage
 from django.utils import timezone   # Tools for handling time
 from datetime import datetime
 
-from goods.models import GoodsCategory
+from goods.models import GoodsCategory, SKU, GoodsVisitCount
 from contents.utils import get_categories
 from goods.utils import get_breadcrumb
-from goods.models import SKU, GoodsVisitCount
+from orders.models import OrderGoods
 from lemon_mall.utils.response_code import RETCODE
+
+class GoodsCommentView(View):
+    """Order Product Evaluation Information"""
+
+    def get(self, request, sku_id):
+        # Getting information about evaluated orders
+        order_goods_list = OrderGoods.objects.filter(sku_id=sku_id, is_commented=True).order_by('-create_time')[:30]
+        # Serialize
+        comment_list = []
+        for order_goods in order_goods_list:
+            username = order_goods.order.user.username
+            comment_list.append({
+                'username': username[0] + '***' + username[-1] if order_goods.is_anonymous else username,
+                'comment':order_goods.comment,
+                'score':order_goods.score,
+            })
+        return http.JsonResponse({'code':RETCODE.OK, 'errmsg':'OK', 'comment_list': comment_list})
 
 class DetailVisitView(View):
     """Statistics on the number of visits to categorized products"""

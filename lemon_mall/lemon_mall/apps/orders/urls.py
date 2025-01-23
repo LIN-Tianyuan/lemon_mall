@@ -10,5 +10,7 @@ urlpatterns = [
     # submit order
     re_path(r'^orders/commit/$', views.OrderCommitView.as_view()),
     # Submit Order Success
-    re_path(r'^orders/success/$', views.OrderSuccessView.as_view())
+    re_path(r'^orders/success/$', views.OrderSuccessView.as_view()),
+    # Order Product Evaluation
+    re_path(r'^orders/comment/$', views.OrderCommentView.as_view())
 ]
