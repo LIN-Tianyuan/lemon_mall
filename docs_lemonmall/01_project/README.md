@@ -8,7 +8,7 @@ Project Development Model:
 Project Operation Mechanism:
  - Proxy service: Nginx server (reverse proxy)
  - Static service: Nginx server (static home page, product detail page, ...)
- - Dynamic service: uwsgi server (business scenarios of lemonmall)
+ - Dynamic service: uwsgi server (business scenarios of Lemonmall)
  - Backend Services: MySQL, Redis, Celery, RabbitMQ, Docker, FastDFS, Elasticsearch, Crontab
  - External interfaces: Twilio, QQ Internet, Alipay
 
@@ -209,11 +209,11 @@ LOGGING = { ...
   'filename': os.path.join(os.path.dirname(BASE_DIR), 'logs/lemonmall.log')
   ...}
 ```
-```text
-The way to create a logger:
+```python
+# The way to create a logger:
 logger = logging.getLogger('django')
 
-Logger usage:
+# Logger usage:
 logger.info('Test logging module info')
 ```
  - Configure front-end static files

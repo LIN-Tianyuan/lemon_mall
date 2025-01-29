@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'carts',  # Shopping cart
     'orders', # Order
     'payment',  # Payment
+    'lemon_admin'
 ]
 
 MIDDLEWARE = [

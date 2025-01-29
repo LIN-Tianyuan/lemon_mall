@@ -202,3 +202,39 @@ if (this.error_name == false) {
     })
 }
 ```
+## 2.4 State maintenance
+```python
+# Save registration data
+try:
+    user = User.objects.create_user(username=username, password=password, mobile=mobile)
+except DatabaseError:
+    return render(request, 'register.html', {'register_errmsg': 'Registration Failure'})
+
+# Log in users for stateful retention
+login(request, user)
+
+# Respond to registration results
+return redirect(reverse('contents:index'))
+```
+## 2.5 Duplicate registration of user name/mobile phone number
+Core Idea: Use the user name to query whether the record corresponding to the user name exists, if it exists, it means duplicate registration, and vice versa, there is no duplicate registration.
+```python
+class UsernameCountView(View):
+    ...
+
+class MobileCountView(View):
+    ...
+```
+## 2.6 Logical summary
+### 2.6.1 Frontend(Vue)
+ - Import Vue.js library and ajax request library
+ - Prepare div box tags
+ - Prepare js files
+ - Html page to bind variables, events, etc.
+ - Define variables, events, etc. in js file
+### 2.6.2 Backend
+ - Business logic analysis
+ - Interface design and definition
+ - Receive and check parameters
+ - Realization of the main business logic
+ - Response results

@@ -1,18 +1,62 @@
 # Lemon Mall
+Front Office - Users
+## Overview
+Business Model: B2C
 
-## [1. Project preparation](./docs/01_project/README.md)
+Development mode: No front-end and back-end separation
 
-## [2. User registration](./docs/02_user_registration/README.md)
+Frontend framework: Vue.js
 
-## [3. Captcha](./docs/03_captcha/README.md)
+Backend Framework: Django + Jinja2 template engine
 
-## [4. User login](./docs/04_user_login/README.md)
+Proxy service: Nginx server (reverse proxy)
 
-## [5. User center](./docs/05_user_center/README.md)
-## [6. Product](./docs/06_product/README.md)
-## [7. Shopping cart](./docs/07_shopping_cart/README.md)
-## [8. Order](./docs/08_order/README.md)
-## [9. Payment](./docs/09_payment/README.md)
+Static services: Nginx server (static home page, product detail page, ...)
+
+Dynamic services: uwsgi server (Lemonmall business scenario)
+
+Backend Services: MySQL, Redis, Celery, RabbitMQ, Docker, FastDFS, Elasticsearch, Crontab
+
+External interfaces: Twilio, QQ Internet, Alipay
+
+## Usage environment
+
+
+User: 
+ - registration
+   - CAPTCHA (Third Party Image Captcha)
+   - Send SMS (Twilio、Celery)
+   - Duplicate Account
+   - Data saving
+ - login
+   - Forms Login (Multi-account login)
+   - Third Party Login
+
+Commodity:
+
+Shopping cart:
+
+Order:
+
+Payment:
+
+
+
+## [1. Project preparation](docs_lemonmall/01_project/README.md)
+
+## [2. User registration](docs_lemonmall/02_user_registration/README.md)
+
+## [3. Captcha](docs_lemonmall/03_captcha/README.md)
+
+## [4. User login](docs_lemonmall/04_user_login/README.md)
+
+## [5. User center](docs_lemonmall/05_user_center/README.md)
+## [6. Product](docs_lemonmall/06_product/README.md)
+## [7. Shopping cart](docs_lemonmall/07_shopping_cart/README.md)
+## [8. Order](docs_lemonmall/08_order/README.md)
+## [9. Payment](docs_lemonmall/09_payment/README.md)
+## [10. Performance optimization](docs_lemonmall/10_performance_optimization/README.md)
+## [Realization](docs_lemonmall/Realization/README.md)
 ## Notice
 ### 1. MySQL Datebase install
 ```bash
@@ -276,6 +320,25 @@ $ python manage.py crontab remove
 # Cancel commit
 git reset --soft HEAD^
 ```
+
+### 15. Quick create django project
+```bash
+python3 -m venv lemonmall-env
+source lemonmall-env/bin/activate
+pip3 install django
+
+django-admin startproject lemon_mall
+python3 manage.py runserver
+```
+
+### 16. Pycharm Configuration Django
+ - Edit Configuration
+ - \+ Django server
+ - Fix
+ - Enable Django Support
+ - Django project root: lemon_mall/lemon_mall (Folders with manage.py)
+ - Settings: lemon_mall/settings/dev.py
+ - Apply -> Ok
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
