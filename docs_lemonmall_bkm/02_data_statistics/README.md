@@ -78,7 +78,7 @@ class UserDayOrdersCountView(APIView):
         # Get the day's date: datetime
         now_date = date.today()
         # Get the total number of logged users for the day
-        count = User.objects.filter(orders__create_time__gte=now_date).count()
+        count = len(set(User.objects.filter(orders__create_time__gte=now_date)))
         # Return results
         return Response({'count': count, 'date': now_date})
 ```
