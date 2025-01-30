@@ -9,5 +9,6 @@ urlpatterns = [
     # --------------------- data statistics ---------------------
     # total number of users
     re_path(r'^statistical/total_count/$', statistical.UserCountView.as_view()),
-
+    # daily incremental user
+    re_path(r'^statistical/day_increment/$', statistical.UserDayCountView.as_view()),
 ]

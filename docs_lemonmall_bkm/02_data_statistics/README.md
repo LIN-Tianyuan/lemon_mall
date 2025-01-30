@@ -35,3 +35,14 @@ GET http://127.0.0.1:8080/lemon_admin/statistical/total_count/
 Authorization:(Bearer Token)
 Token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM4MzI3OTg4LCJpYXQiOjE3MzgyNDE1ODgsImp0aSI6IjNjOThiZTZjOTMyNDQzNjhhNWFiNGQwMWU3NDc4ZTY0IiwidXNlcl9pZCI6Mn0.WqjxHVGWszd2Lu-wI3cfGhKdGrklNbAKTUkgghNH4AU
 ```
+## 2.2 Daily user statistics(Count the number of users registered on the same day)
+- Interface analysis
+   - request method: GET
+   - request path: /lemon_admin/statistical/day_increment/
+   - request parameter: Token Header Passing
+   - result: {count, date}
+- Business logic
+   - Get the day's date: datetime
+   - Get the number of users registered on the day: User
+   - Return results
+   - API View
