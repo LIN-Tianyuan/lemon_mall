@@ -46,3 +46,14 @@ Token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhw
    - Get the number of users registered on the day: User
    - Return results
    - API View
+## 2.3 Daily user statistics (Count the number of users who have logged in that day)
+- Interface analysis
+    - request method: GET
+    - request path: /lemon_admin/statistical/day_active/
+    - request parameter: Token Header Passing
+    - result: {count, date}
+- Business logic
+    - Get the day's date: datetime
+    - Get the number of users logged on the day: User
+    - Return results
+    - API View
