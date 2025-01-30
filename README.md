@@ -339,6 +339,23 @@ python3 manage.py runserver
  - Django project root: lemon_mall/lemon_mall (Folders with manage.py)
  - Settings: lemon_mall/settings/dev.py
  - Apply -> Ok
+
+### 17. Create super user
+```bash
+python manage.py shell
+```
+```python
+from users.models import User 
+
+admin_user = User.objects.create_superuser(
+    username="admin",
+    email="admin@example.com",
+    password="admin"
+)
+```
+```bash
+exit()
+```
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)

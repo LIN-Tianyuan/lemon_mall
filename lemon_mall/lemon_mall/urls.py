@@ -38,5 +38,7 @@ urlpatterns = [
     # orders
     re_path(r'^', include('orders.urls', namespace='orders')),
     # payment
-    re_path(r'^', include('payment.urls', namespace='payment'))
+    re_path(r'^', include('payment.urls', namespace='payment')),
+    # admin
+    re_path(r'^lemon_admin/', include('lemon_admin.urls'))
 ]

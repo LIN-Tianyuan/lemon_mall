@@ -52,12 +52,24 @@ def get_user_by_account(account):
 class UsernameMobileBackend(ModelBackend):
     # Customizing the back-end of user authentication
     def authenticate(self, request, username=None, password=None, **kwargs):
-        """Rewrite the methods for user authentication"""
-        # search user
-        user = get_user_by_account(username)
-        # # If the user can be queried, only need to verify that the password is correct.
-        if user and user.check_password(password):
-            # Returns user
-            return user
+        if request and getattr(request, "path", "").startswith("/lemon_admin/"):
+            # Back Office Login
+            try:
+                # is_superuser: Determine if a user is a super user
+                user = User.objects.get(username=username, is_superuser=True)
+            except:
+                user = None
+
+            if user is not None and user.check_password(password):
+                return user
         else:
-            return None
+            print(777)
+            """Rewrite the methods for user authentication"""
+            # search user
+            user = get_user_by_account(username)
+            # # If the user can be queried, only need to verify that the password is correct.
+            if user and user.check_password(password):
+                # Returns user
+                return user
+            else:
+                return None
