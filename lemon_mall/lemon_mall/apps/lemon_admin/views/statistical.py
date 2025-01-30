@@ -40,3 +40,15 @@ class UserDayActiveView(APIView):
         count = User.objects.filter(last_login__gte=now_date).count()
         # Return results
         return Response({'count': count, 'date': now_date})
+
+class UserDayOrdersCountView(APIView):
+    """Statistics of users placing orders"""
+    # Permission
+    permission_classes = [IsAdminUser]
+    def get(self, request):
+        # Get the day's date: datetime
+        now_date = date.today()
+        # Get the total number of logged users for the day
+        count = User.objects.filter(orders__create_time__gte=now_date).count()
+        # Return results
+        return Response({'count': count, 'date': now_date})
