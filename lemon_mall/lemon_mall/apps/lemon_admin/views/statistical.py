@@ -2,7 +2,10 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from datetime import date, timedelta
+
+from lemon_admin.serializers.statistical import UserGoodsCountSerializer
 from users.models import User
+from goods.models import GoodsVisitCount
 
 class UserCountView(APIView):
     """Total User Statistics"""
@@ -73,3 +76,17 @@ class UserMonthCountView(APIView):
             data_list.append({'count': count, 'date': index_date})
         # Return results
         return Response(data_list)
+
+
+class UserGoodsCountView(APIView):
+    """Statistics on daily visits to categorized products"""
+    # Permission
+    permission_classes = [IsAdminUser]
+    def get(self, request):
+        # Get the day's date: datetime
+        now_date = date.today()
+        # Get the number of category visits for the day
+        goods = GoodsVisitCount.objects.filter(date__gte=now_date)
+        ser = UserGoodsCountSerializer(goods, many=True)
+        # Return results
+        return Response(ser.data)

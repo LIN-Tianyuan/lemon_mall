@@ -17,4 +17,6 @@ urlpatterns = [
     re_path(r'^statistical/day_orders/$', statistical.UserDayOrdersCountView.as_view()),
     # monthly incremental user
     re_path(r'^statistical/month_increment/$', statistical.UserMonthCountView.as_view()),
+    #
+    re_path(r'^statistical/goods_day_views/$', statistical.UserGoodsCountView.as_view()),
 ]

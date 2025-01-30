@@ -98,3 +98,14 @@ re_path(r'^statistical/day_orders/$', statistical.UserDayOrdersCountView.as_view
     - Iterate through the loop to get the data for each day, starting with the date one month ago: User
     - Return results
     - API View
+## 2.6 Daily Classifieds Visits (counting the number of visits to classifieds in a day)
+- Interface analysis
+  - request method: GET
+  - request path: /lemon_admin/statistical/goods_day_views/
+  - request parameter: Token Header Passing
+  - result: {count, date}
+- Business logic
+  - Get the day's date: datetime
+  - Query the number of visits by category based on the date of the day
+  - Return results
+  - API View
