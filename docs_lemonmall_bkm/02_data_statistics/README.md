@@ -86,3 +86,15 @@ class UserDayOrdersCountView(APIView):
 # lemon_admin/urls.py
 re_path(r'^statistical/day_orders/$', statistical.UserDayOrdersCountView.as_view()),
 ```
+## 2.5 Monthly user increase statistics (statistics on the number of users registered per day within a month)
+- Interface analysis
+    - request method: GET
+    - request path: /lemon_admin/statistical/month_increment/
+    - request parameter: Token Header Passing
+    - result: [{count, date}, {count, date}, ...]
+- Business logic
+    - Get the day's date: datetime
+    - Get the date one month ago
+    - Iterate through the loop to get the data for each day, starting with the date one month ago: User
+    - Return results
+    - API View

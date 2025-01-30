@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
-from datetime import date
+from datetime import date, timedelta
 from users.models import User
 
 class UserCountView(APIView):
@@ -52,3 +52,24 @@ class UserDayOrdersCountView(APIView):
         count = len(set(User.objects.filter(orders__create_time__gte=now_date)))
         # Return results
         return Response({'count': count, 'date': now_date})
+
+
+class UserMonthCountView(APIView):
+    """Monthly Increase in Users"""
+    # Permission
+    permission_classes = [IsAdminUser]
+    def get(self, request):
+        # Get the day's date: datetime
+        now_date = date.today()
+        # Get the date one month ago
+        begin_date = now_date - timedelta(days=29)
+        data_list = []
+        for i in range(30):
+            # Start date
+            index_date = begin_date + timedelta(days=i)
+            # Date of the next day(Date of the day following the starting date)
+            next_date = index_date + timedelta(days=i+1)
+            count = User.objects.filter(date_joined__gte=index_date, date_joined__lt=next_date).count()
+            data_list.append({'count': count, 'date': index_date})
+        # Return results
+        return Response(data_list)
