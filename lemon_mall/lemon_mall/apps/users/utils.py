@@ -63,7 +63,6 @@ class UsernameMobileBackend(ModelBackend):
             if user is not None and user.check_password(password):
                 return user
         else:
-            print(777)
             """Rewrite the methods for user authentication"""
             # search user
             user = get_user_by_account(username)

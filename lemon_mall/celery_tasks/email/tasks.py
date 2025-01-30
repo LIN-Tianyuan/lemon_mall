@@ -21,4 +21,4 @@ def send_verify_email(self, to_email, verify_url):
         send_mail(subject, '', settings.EMAIL_FROM, [to_email], html_message=html_message)
     except Exception as e:
         # trigger an error retry: Maximum 3 tentatives
-        raise self.retry(exec, max_retries=3)
+        raise self.retry(exc=e, max_retries=3)

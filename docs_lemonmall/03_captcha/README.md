@@ -2,7 +2,7 @@
 ## 3.1 Graphical captcha
  - View
 ```python
-# verifications/views.py
+# verifications/login.py
 class ImageCodeView(View):
     """graphical captcha"""
 
@@ -177,7 +177,7 @@ send_sms_code() {}
 ```
  - Supplement the back-end logic for SMS validation during registration
 ```python
-# users/views.py
+# users/login.py
 class RegisterView(View):
     ...
     sms_code_client = request.POST.get('sms_code')

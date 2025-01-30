@@ -36,7 +36,7 @@ CORS_ALLOW_CREDENTIALS = True  # Allow cookies
 ```
 ## 1.2 Administrator Login
  - Interface analysis
-   - path: lemonmall/authorizations/
+   - path: /lemon_admin/authorizations/
    - parameter: username, password
    - result: username, token, id
  - Business logic
@@ -84,7 +84,7 @@ re_path(r'^lemon_admin/', include('lemon_admin.urls'))
 ```
  - Customized JWT Response Handler Functions
 ```python
-# lemon_admin/views.py
+# lemon_admin/login.py
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 

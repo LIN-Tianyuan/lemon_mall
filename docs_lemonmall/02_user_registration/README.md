@@ -31,7 +31,7 @@ INSTALLED_APPS = [
 ```
  - Define the user registration view
 ```python
-# apps/users/views.py
+# apps/users/login.py
 from django.views import View
 from django.shortcuts import render
 
@@ -130,7 +130,7 @@ cd ~/projects/lemon_project/lemon_mall/lemon_mall/apps
 python ../../manage.py startapp contents
 ```
 ```python
-# contents/views.py
+# contents/login.py
 class IndexView(View):
 
     def get(self, request):
@@ -149,7 +149,7 @@ urlpatterns = [
 ]
 ```
 ```python
-# users/views.py
+# users/login.py
 class RegisterView(View):
     ...
     return redirect(reverse('contents:index'))
