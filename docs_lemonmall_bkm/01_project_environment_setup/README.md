@@ -63,20 +63,11 @@ INSTALLED_APPS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',  # ✅ 替换旧的 JWT 认证
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ),
 }
-```
-```python
-# lemon_admin/urls.py
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-
-urlpatterns = [
-    re_path(r'^authorizations/$', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    re_path(r'^refresh/$', TokenRefreshView.as_view(), name='token_refresh'),
-]
 ```
 ```python
 # lemon_mall/urls.py

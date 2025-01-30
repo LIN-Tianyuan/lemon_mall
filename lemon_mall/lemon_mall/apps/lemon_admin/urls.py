@@ -1,5 +1,5 @@
 from django.urls import re_path
-from .views import login, statistical
+from .views import login, statistical, users
 
 app_name = 'lemon_admin'
 
@@ -19,4 +19,6 @@ urlpatterns = [
     re_path(r'^statistical/month_increment/$', statistical.UserMonthCountView.as_view()),
     #
     re_path(r'^statistical/goods_day_views/$', statistical.UserGoodsCountView.as_view()),
+    # --------------------- user management ---------------------
+    re_path(r'^users/$', users.UserView.as_view()),
 ]
